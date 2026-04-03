@@ -5,5 +5,5 @@ Khalil AL Youssef
 Hiba Yahya Mehrez
 Chaza Raed Mohammad
 Malak Faour
-Yara
-Kassem
+Yara Abdallah
+Kassem Saadi
