@@ -13,12 +13,10 @@ Career Mentor platform project for Group D.
 ## Next.js setup
 This repository now includes the required base files for a Next.js 
 
-### Install dependencies
-```bash
-npm install
-```
+
 
 ### Run locally
 ```bash
+cd career-mentor
 npm run dev
 ```
