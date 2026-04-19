@@ -9,8 +9,8 @@ interface RouteParams {
 }
 
 /**
- * GET /api/skills/:id
- * Get a single skill by ID
+ * GET /api/career_path/:id
+ * Get a single career path by ID
  */
 export async function GET(
   request: NextRequest,
@@ -23,21 +23,30 @@ export async function GET(
       return NextResponse.json(
         {
           success: false,
-          error: "Skill ID is required",
+          error: "Career path ID is required",
         },
         { status: 400 }
       );
     }
 
-    const skill = await prisma.skill.findUnique({
+    const careerPath = await prisma.careerPath.findUnique({
       where: { id },
+      include: {
+        users: {
+          select: {
+            userId: true,
+            progress: true,
+            createdAt: true,
+          },
+        },
+      },
     });
 
-    if (!skill) {
+    if (!careerPath) {
       return NextResponse.json(
         {
           success: false,
-          error: "Skill not found",
+          error: "Career path not found",
         },
         { status: 404 }
       );
@@ -46,16 +55,16 @@ export async function GET(
     return NextResponse.json(
       {
         success: true,
-        data: skill,
+        data: careerPath,
       },
       { status: 200 }
     );
   } catch (error) {
-    console.error("GET /api/skills/:id error:", error);
+    console.error("GET /api/career_path/:id error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to fetch skill",
+        error: "Failed to fetch career path",
       },
       { status: 500 }
     );
@@ -63,16 +72,14 @@ export async function GET(
 }
 
 /**
- * PUT /api/skills/:id
- * Update a skill by ID (admin only)
- * Body: { name?: string, category?: string }
+ * PUT /api/career_path/:id
+ * Update a career path by ID (admin only)
  */
 export async function PUT(
   request: NextRequest,
   { params }: RouteParams
 ) {
   try {
-    // Verify admin access
     requireAdmin(request);
 
     const { id } = params;
@@ -81,86 +88,78 @@ export async function PUT(
       return NextResponse.json(
         {
           success: false,
-          error: "Skill ID is required",
+          error: "Career path ID is required",
         },
         { status: 400 }
       );
     }
 
-    // Check if skill exists
-    const existingSkill = await prisma.skill.findUnique({
+    // Check if career path exists
+    const existing = await prisma.careerPath.findUnique({
       where: { id },
     });
 
-    if (!existingSkill) {
+    if (!existing) {
       return NextResponse.json(
         {
           success: false,
-          error: "Skill not found",
+          error: "Career path not found",
         },
         { status: 404 }
       );
     }
 
     const body = await request.json();
-    const { name, category } = body;
+    const { title, description } = body;
 
     // Build update data
     const updateData: Record<string, string | null> = {};
 
-    if (name !== undefined) {
-      if (typeof name !== "string") {
+    if (title !== undefined) {
+      if (typeof title !== "string") {
         return NextResponse.json(
           {
             success: false,
-            error: "Name must be a string",
+            error: "Title must be a string",
           },
           { status: 400 }
         );
       }
-      updateData.name = name.trim();
+      updateData.title = title.trim();
     }
 
-    if (category !== undefined) {
-      if (typeof category !== "string") {
+    if (description !== undefined) {
+      if (description !== null && typeof description !== "string") {
         return NextResponse.json(
           {
             success: false,
-            error: "Category must be a string",
+            error: "Description must be a string",
           },
           { status: 400 }
         );
       }
-      updateData.category = category ? category.trim() : null;
+      updateData.description = description ? description.trim() : null;
     }
 
-    // Check for duplicate if name/category is being changed
-    if (updateData.name || updateData.category) {
-      const finalName = updateData.name || existingSkill.name;
-      const finalCategory = updateData.category || existingSkill.category;
-
-      const duplicate = await prisma.skill.findUnique({
-        where: {
-          name_category: {
-            name: finalName,
-            category: finalCategory || "",
-          },
-        },
+    // Check for duplicate title if being changed
+    if (updateData.title && updateData.title !== existing.title) {
+      const duplicate = await prisma.careerPath.findUnique({
+        where: { title: updateData.title },
       });
 
-      if (duplicate && duplicate.id !== id) {
+      if (duplicate) {
         return NextResponse.json(
           {
             success: false,
-            error: "Skill with this name and category already exists",
+            error: "Career path with this title already exists",
           },
           { status: 409 }
         );
       }
     }
 
-    // Update skill
-    const updatedSkill = await prisma.skill.update({
+    // Update career path
+    const updated = await prisma.careerPath.update({
       where: { id },
       data: updateData,
     });
@@ -168,8 +167,8 @@ export async function PUT(
     return NextResponse.json(
       {
         success: true,
-        data: updatedSkill,
-        message: "Skill updated successfully",
+        data: updated,
+        message: "Career path updated successfully",
       },
       { status: 200 }
     );
@@ -196,11 +195,11 @@ export async function PUT(
       }
     }
 
-    console.error("PUT /api/skills/:id error:", error);
+    console.error("PUT /api/career_path/:id error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to update skill",
+        error: "Failed to update career path",
       },
       { status: 500 }
     );
@@ -208,15 +207,14 @@ export async function PUT(
 }
 
 /**
- * DELETE /api/skills/:id
- * Delete a skill by ID (admin only)
+ * DELETE /api/career_path/:id
+ * Delete a career path by ID (admin only)
  */
 export async function DELETE(
   request: NextRequest,
   { params }: RouteParams
 ) {
   try {
-    // Verify admin access
     requireAdmin(request);
 
     const { id } = params;
@@ -225,36 +223,36 @@ export async function DELETE(
       return NextResponse.json(
         {
           success: false,
-          error: "Skill ID is required",
+          error: "Career path ID is required",
         },
         { status: 400 }
       );
     }
 
-    // Check if skill exists
-    const existingSkill = await prisma.skill.findUnique({
+    // Check if career path exists
+    const existing = await prisma.careerPath.findUnique({
       where: { id },
     });
 
-    if (!existingSkill) {
+    if (!existing) {
       return NextResponse.json(
         {
           success: false,
-          error: "Skill not found",
+          error: "Career path not found",
         },
         { status: 404 }
       );
     }
 
-    // Delete skill
-    await prisma.skill.delete({
+    // Delete career path (cascade will handle user enrollments)
+    await prisma.careerPath.delete({
       where: { id },
     });
 
     return NextResponse.json(
       {
         success: true,
-        message: "Skill deleted successfully",
+        message: "Career path deleted successfully",
       },
       { status: 200 }
     );
@@ -279,23 +277,13 @@ export async function DELETE(
           { status: 403 }
         );
       }
-
-      if (error.message.includes("Foreign key constraint")) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Cannot delete skill - it is in use",
-          },
-          { status: 409 }
-        );
-      }
     }
 
-    console.error("DELETE /api/skills/:id error:", error);
+    console.error("DELETE /api/career_path/:id error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to delete skill",
+        error: "Failed to delete career path",
       },
       { status: 500 }
     );
