@@ -4,23 +4,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
-type NavLink = {
-  name: string;
-  href: string;
-  submenu?: { name: string; href: string }[];
-};
-
-const links: NavLink[] = [
+const links = [
   { name: "Features", href: "#features" },
   { name: "AI Demo", href: "#ai-demo" },
-  {
-    name: "Dashboard",
-    href: "#dashboard",
-    submenu: [
-      { name: "Skills", href: "/dashboard/skills" },
-      { name: "Career Path", href: "/dashboard/career-path" },
-    ],
-  },
+  { name: "Dashboard", href: "#dashboard" },
   { name: "Reviews", href: "#reviews" },
 ];
 
@@ -59,7 +46,7 @@ export default function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        {/* ðŸ”¥ Logo */}
+        {/* Logo */}
         <div className="flex items-center gap-3 cursor-pointer">
           <motion.div
             animate={{
@@ -84,47 +71,31 @@ export default function Navbar() {
           </motion.h1>
         </div>
 
-        {/* ðŸ–¥ï¸ Desktop Links */}
+        {/* Desktop Links */}
         <div className="hidden md:flex gap-8 text-sm">
           {links.map((link) => (
-            <div key={link.name} className="relative group">
-              <a href={link.href} className="relative inline-block">
-                <span
-                  className={`transition ${
-                    active === link.href
-                      ? "text-black dark:text-white"
-                      : "text-zinc-500"
-                  }`}
-                >
-                  {link.name}
-                </span>
+            <a key={link.href} href={link.href} className="relative group">
+              <span
+                className={`transition ${
+                  active === link.href
+                    ? "text-black dark:text-white"
+                    : "text-zinc-500"
+                }`}
+              >
+                {link.name}
+              </span>
 
-                {/* underline */}
-                <span
-                  className={`absolute left-0 -bottom-1 h-0.5 bg-black dark:bg-white transition-all duration-300 ${
-                    active === link.href ? "w-full" : "w-0 group-hover:w-full"
-                  }`}
-                />
-              </a>
-
-              {link.submenu && (
-                <div className="absolute left-0 mt-1 w-48 rounded-lg bg-white dark:bg-zinc-900 shadow-lg border border-zinc-200 dark:border-zinc-800 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200">
-                  {link.submenu.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="block px-4 py-2 text-sm text-zinc-700 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+              {/* underline */}
+              <span
+                className={`absolute left-0 -bottom-1 h-0.5 bg-black dark:bg-white transition-all duration-300 ${
+                  active === link.href ? "w-full" : "w-0 group-hover:w-full"
+                }`}
+              />
+            </a>
           ))}
         </div>
 
-        {/* ðŸ‘‰ Right side */}
+        {/* Right side */}
         <div className="flex items-center gap-4">
           <Link href="/login" className="text-sm hidden md:block">
             Login
@@ -139,14 +110,14 @@ export default function Navbar() {
             </Link>
           </motion.div>
 
-          {/* ðŸ“± Mobile button */}
+          {/* Mobile button */}
           <button onClick={() => setOpen(!open)} className="md:hidden text-xl">
-            â˜°
+            ☰
           </button>
         </div>
       </div>
 
-      {/* ðŸ“± Mobile Menu */}
+      {/* Mobile Menu */}
       {open && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -154,30 +125,14 @@ export default function Navbar() {
           className="md:hidden bg-white dark:bg-zinc-900 px-6 py-4 space-y-4 border-t dark:border-zinc-800"
         >
           {links.map((link) => (
-            <div key={link.name} className="space-y-2">
-              <a
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className="block text-sm"
-              >
-                {link.name}
-              </a>
-
-              {link.submenu && (
-                <div className="ml-4 space-y-1">
-                  {link.submenu.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setOpen(false)}
-                      className="block text-sm text-zinc-700 dark:text-zinc-100"
-                    >
-                      {item.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+            <a
+              key={link.href}
+              href={link.href}
+              onClick={() => setOpen(false)}
+              className="block text-sm"
+            >
+              {link.name}
+            </a>
           ))}
 
           <Link href="/login" className="block text-sm">
@@ -195,3 +150,4 @@ export default function Navbar() {
     </motion.nav>
   );
 }
+

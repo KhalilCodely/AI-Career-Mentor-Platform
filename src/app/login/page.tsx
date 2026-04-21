@@ -57,7 +57,7 @@ export default function LoginPage() {
       }
       setSuccess("Welcome back! Redirecting...");
 
-      setTimeout(() => router.push("/"), 1200);
+      setTimeout(() => router.push("/userboard"), 1200);
     } catch {
       setError("Unexpected error. Try again.");
     } finally {
