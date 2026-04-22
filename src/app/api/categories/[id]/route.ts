@@ -1,25 +1,25 @@
 /**
- * GET /api/skills/[id]
- * PUT /api/skills/[id]
- * DELETE /api/skills/[id]
- * Skill by ID endpoint for getting, updating, and deleting a specific skill
+ * GET /api/categories/[id]
+ * PUT /api/categories/[id]
+ * DELETE /api/categories/[id]
+ * Category by ID endpoint for getting, updating, and deleting a specific category
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import {
-  getSkillById,
-  updateSkill,
-  deleteSkill,
-} from "@/lib/services/skillService";
+  getCategoryById,
+  updateCategory,
+  deleteCategory,
+} from "@/lib/services/categoryService";
 import {
-  validateUpdateSkillRequest,
-} from "@/lib/validation/skill";
+  validateUpdateCategoryRequest,
+} from "@/lib/validation/category";
 
 /**
- * GET /api/skills/[id]
- * Get a specific skill by ID
+ * GET /api/categories/[id]
+ * Get a specific category by ID
  * Query params:
- *   - include_category (optional): "true" to include category details
+ *   - include_skills (optional): "true" to include skills for the category
  */
 export async function GET(
   request: NextRequest,
@@ -28,15 +28,15 @@ export async function GET(
   try {
     const { id } = params;
     const searchParams = request.nextUrl.searchParams;
-    const includeCategory = searchParams.get("include_category") === "true";
+    const includeSkills = searchParams.get("include_skills") === "true";
 
-    const skill = await getSkillById(id, includeCategory);
+    const category = await getCategoryById(id, includeSkills);
 
-    if (!skill) {
+    if (!category) {
       return NextResponse.json(
         {
           success: false,
-          error: "Skill not found",
+          error: "Category not found",
         },
         { status: 404 }
       );
@@ -45,16 +45,16 @@ export async function GET(
     return NextResponse.json(
       {
         success: true,
-        data: skill,
+        data: category,
       },
       { status: 200 }
     );
   } catch (error) {
-    console.error("GET /api/skills/[id] error:", error);
+    console.error("GET /api/categories/[id] error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to fetch skill",
+        error: "Failed to fetch category",
       },
       { status: 500 }
     );
@@ -62,9 +62,9 @@ export async function GET(
 }
 
 /**
- * PUT /api/skills/[id]
- * Update a specific skill
- * Body: { name?: string, categoryId?: string }
+ * PUT /api/categories/[id]
+ * Update a specific category
+ * Body: { name?: string, description?: string }
  */
 export async function PUT(
   request: NextRequest,
@@ -73,32 +73,32 @@ export async function PUT(
   try {
     const { id } = params;
     const body = await request.json();
-    const validatedData = validateUpdateSkillRequest(body);
+    const validatedData = validateUpdateCategoryRequest(body);
 
-    // Verify skill exists
-    const existing = await getSkillById(id);
+    // Verify category exists
+    const existing = await getCategoryById(id);
     if (!existing) {
       return NextResponse.json(
         {
           success: false,
-          error: "Skill not found",
+          error: "Category not found",
         },
         { status: 404 }
       );
     }
 
-    const skill = await updateSkill(id, validatedData);
+    const category = await updateCategory(id, validatedData);
 
     return NextResponse.json(
       {
         success: true,
-        data: skill,
-        message: "Skill updated successfully",
+        data: category,
+        message: "Category updated successfully",
       },
       { status: 200 }
     );
   } catch (error) {
-    console.error("PUT /api/skills/[id] error:", error);
+    console.error("PUT /api/categories/[id] error:", error);
 
     if (error instanceof Error) {
       if (error.message.includes("not found")) {
@@ -138,7 +138,7 @@ export async function PUT(
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to update skill",
+        error: "Failed to update category",
       },
       { status: 500 }
     );
@@ -146,8 +146,8 @@ export async function PUT(
 }
 
 /**
- * DELETE /api/skills/[id]
- * Delete a specific skill
+ * DELETE /api/categories/[id]
+ * Delete a specific category
  */
 export async function DELETE(
   request: NextRequest,
@@ -156,30 +156,30 @@ export async function DELETE(
   try {
     const { id } = params;
 
-    // Verify skill exists
-    const existing = await getSkillById(id);
+    // Verify category exists
+    const existing = await getCategoryById(id);
     if (!existing) {
       return NextResponse.json(
         {
           success: false,
-          error: "Skill not found",
+          error: "Category not found",
         },
         { status: 404 }
       );
     }
 
-    const skill = await deleteSkill(id);
+    const category = await deleteCategory(id);
 
     return NextResponse.json(
       {
         success: true,
-        data: skill,
-        message: "Skill deleted successfully",
+        data: category,
+        message: "Category deleted successfully",
       },
       { status: 200 }
     );
   } catch (error) {
-    console.error("DELETE /api/skills/[id] error:", error);
+    console.error("DELETE /api/categories/[id] error:", error);
 
     if (error instanceof Error) {
       if (error.message.includes("not found")) {
@@ -206,7 +206,7 @@ export async function DELETE(
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to delete skill",
+        error: "Failed to delete category",
       },
       { status: 500 }
     );

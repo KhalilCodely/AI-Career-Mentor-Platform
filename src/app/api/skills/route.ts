@@ -1,37 +1,38 @@
+/**
+ * GET /api/skills
+ * POST /api/skills
+ * Skills endpoint for listing and creating skills
+ */
+
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import {
+  getAllSkills,
+  createSkill,
+  getSkillsByCategory,
+} from "@/lib/services/skillService";
+import {
+  validateCreateSkillRequest,
+} from "@/lib/validation/skill";
 
 /**
  * GET /api/skills
- * Get all skills or filter by category
- * Query params: category (optional)
+ * Get all skills, optionally filtered by category
+ * Query params:
+ *   - category_id (optional): Filter skills by category ID
+ *   - include_category (optional): "true" to include category details for each skill
  */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const category = searchParams.get("category");
+    const categoryId = searchParams.get("category_id");
+    const includeCategory = searchParams.get("include_category") === "true";
 
     let skills;
 
-    if (category) {
-      skills = await prisma.skill.findMany({
-        where: {
-          category: {
-            equals: category,
-            mode: "insensitive",
-          },
-        },
-        orderBy: {
-          name: "asc",
-        },
-      });
+    if (categoryId) {
+      skills = await getSkillsByCategory(categoryId);
     } else {
-      skills = await prisma.skill.findMany({
-        orderBy: {
-          name: "asc",
-        },
-      });
+      skills = await getAllSkills(includeCategory);
     }
 
     return NextResponse.json(
@@ -56,98 +57,62 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/skills
- * Create a new skill (admin only)
- * Body: { name: string, category: string }
+ * Create a new skill
+ * Body: { name: string, categoryId: string }
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify admin access
-    requireAdmin(request);
-
     const body = await request.json();
-    const { name, category } = body;
+    const validatedData = validateCreateSkillRequest(body);
 
-    // Validation
-    if (!name || typeof name !== "string") {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Skill name is required and must be a string",
-        },
-        { status: 400 }
-      );
-    }
-
-    if (category && typeof category !== "string") {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Category must be a string",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Check if skill with same name and category already exists
-    const existingSkill = await prisma.skill.findUnique({
-      where: {
-        name_category: {
-          name: name.trim(),
-          category: category ? category.trim() : "",
-        },
-      },
-    });
-
-    if (existingSkill) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Skill with this name and category already exists",
-        },
-        { status: 409 }
-      );
-    }
-
-    // Create new skill
-    const newSkill = await prisma.skill.create({
-      data: {
-        name: name.trim(),
-        category: category ? category.trim() : null,
-      },
-    });
+    const skill = await createSkill(validatedData);
 
     return NextResponse.json(
       {
         success: true,
-        data: newSkill,
+        data: skill,
         message: "Skill created successfully",
       },
       { status: 201 }
     );
   } catch (error) {
+    console.error("POST /api/skills error:", error);
+
     if (error instanceof Error) {
-      if (error.message.includes("No authorization header")) {
+      if (error.message.includes("not found")) {
         return NextResponse.json(
           {
             success: false,
-            error: "Unauthorized - Admin access required",
+            error: error.message,
           },
-          { status: 401 }
+          { status: 404 }
         );
       }
 
-      if (error.message.includes("Forbidden")) {
+      if (error.message.includes("already exists")) {
         return NextResponse.json(
           {
             success: false,
-            error: "Forbidden - Admins only",
+            error: error.message,
           },
-          { status: 403 }
+          { status: 409 }
+        );
+      }
+
+      if (
+        error.message.includes("is required") ||
+        error.message.includes("must be")
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: error.message,
+          },
+          { status: 400 }
         );
       }
     }
 
-    console.error("POST /api/skills error:", error);
     return NextResponse.json(
       {
         success: false,

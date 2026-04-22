@@ -51,16 +51,31 @@ model Profile {
   @@map("profiles")
 }
 
-model Skill {
+model Category {
   id        String   @id @default(uuid()) @db.Uuid
-  name      String   @db.VarChar(120)
-  category  String?  @db.VarChar(80)
+  name      String   @unique @db.VarChar(120)
+  description String? @db.Text
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  userSkills UserSkill[]
-  courses   Course[]
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  skills    Skill[]
 
-  @@unique([name, category], map: "uq_skills_name_category")
-  @@index([category], map: "idx_skills_category")
+  @@index([createdAt], map: "idx_categories_created_at")
+  @@map("categories")
+}
+
+model Skill {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @db.VarChar(120)
+  categoryId String   @map("category_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  userSkills UserSkill[]
+  courses    Course[]
+
+  @@unique([name, categoryId], map: "uq_skills_name_category_id")
+  @@index([categoryId], map: "idx_skills_category_id")
+  @@index([createdAt], map: "idx_skills_created_at")
   @@map("skills")
 }
 
