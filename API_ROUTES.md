@@ -101,6 +101,22 @@ This document outlines all registered API routes in the Tech Talks Career Mentor
 **Response**: `{ success: boolean, data: Skill, message: string }`  
 **Status**: 200 | 400 | 401 | 403 | 404 | 409 | 500
 
+
+## Profile Routes
+
+### GET `/api/profile`
+**Purpose**: Get the authenticated user's profile
+**Auth**: Requires bearer token
+**Response**: `{ success: boolean, data: Profile | null }`
+**Status**: 200 | 401 | 500
+
+### PUT `/api/profile`
+**Purpose**: Create or update the authenticated user's profile
+**Auth**: Requires bearer token
+**Body**: `{ bio?: string, education?: string, experienceLevel?: string, careerGoal?: string }`
+**Response**: `{ success: boolean, data: Profile, message: string }`
+**Status**: 200 | 400 | 401 | 500
+
 ## Protected Routes
 
 ### GET `/api/protected/test`
@@ -151,6 +167,7 @@ src/app/api/
 │   └── [id]/route.ts            (GET single, PUT update)
 ├── login/route.ts               (POST login)
 ├── signup/route.ts              (POST signup)
+├── profile/route.ts             (GET/PUT profile)
 └── protected/
     └── test/
         ├── route.ts             (GET test)

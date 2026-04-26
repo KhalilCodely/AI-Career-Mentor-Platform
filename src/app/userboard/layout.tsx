@@ -26,6 +26,7 @@ export default function UserboardLayout({
   const navItems = [
     { label: "Skills", href: "/userboard/skills" },
     { label: "Career Path", href: "/userboard/career-path" },
+    { label: "Profile", href: "/userboard/profile" },
   ];
 
   return (
