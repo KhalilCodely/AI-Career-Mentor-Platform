@@ -5,14 +5,14 @@ type JWTPayload = {
   role: "USER" | "ADMIN";
 };
 
-export function requireAdmin(req: Request) {
+export function requireUser(req: Request) {
   const middlewareRole = req.headers.get("x-user-role");
   const middlewareUserId = req.headers.get("x-user-id");
 
-  if (middlewareRole === "ADMIN" && middlewareUserId) {
+  if (middlewareUserId && middlewareRole) {
     return {
       userId: middlewareUserId,
-      role: "ADMIN" as const,
+      role: middlewareRole as "USER" | "ADMIN",
     };
   }
 
@@ -33,10 +33,15 @@ export function requireAdmin(req: Request) {
   }
 
   const decoded = jwt.verify(token, process.env.JWT_SECRET) as JWTPayload;
+  return decoded;
+}
 
-  if (decoded.role !== "ADMIN") {
+export function requireAdmin(req: Request) {
+  const user = requireUser(req);
+
+  if (user.role !== "ADMIN") {
     throw new Error("Forbidden - Admins only");
   }
 
-  return decoded;
+  return user;
 }
