@@ -1,19 +1,17 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { motion } from "framer-motion";
 
 const validateEmail = (value: string) => /\S+@\S+\.\S+/.test(value);
 
 export default function SignupPage() {
   const router = useRouter();
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,9 +41,7 @@ export default function SignupPage() {
     try {
       const res = await fetch("/api/signup", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
           email: email.trim().toLowerCase(),
@@ -54,14 +50,13 @@ export default function SignupPage() {
       });
 
       const data = await res.json();
-
       if (!res.ok) {
         setError(data?.error || "Signup failed.");
         return;
       }
 
-      setSuccess("Account created! Redirecting...");
-      setTimeout(() => router.push("/login"), 1200);
+      setSuccess("Account created! Redirecting to login...");
+      setTimeout(() => router.push("/login"), 900);
     } catch {
       setError("Unexpected error. Try again.");
     } finally {
@@ -70,134 +65,42 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden bg-gradient-to-br from-indigo-200 via-white to-blue-200 dark:from-zinc-950 dark:via-zinc-900 dark:to-black">
-
-      {/* 🔵 Background blobs */}
-      <motion.div
-        className="absolute w-[500px] h-[500px] bg-blue-500/30 blur-3xl rounded-full top-[-120px] left-[-120px]"
-        animate={{ x: [0, 50, 0], y: [0, 40, 0] }}
-        transition={{ duration: 10, repeat: Infinity }}
-      />
-
-      <motion.div
-        className="absolute w-[400px] h-[400px] bg-purple-500/30 blur-3xl rounded-full bottom-[-120px] right-[-120px]"
-        animate={{ x: [0, -50, 0], y: [0, -40, 0] }}
-        transition={{ duration: 12, repeat: Infinity }}
-      />
-
-      {/* 💎 Glass Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 60, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-md rounded-3xl p-8 backdrop-blur-xl bg-white/30 dark:bg-white/10 border border-white/30 dark:border-white/10 shadow-[0_20px_80px_rgba(0,0,0,0.25)]"
-      >
-        {/* 🏠 Back to Home */}
-        <div className="mb-4">
-          <Link
-            href="/"
-            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            ← Back to Home
-          </Link>
-        </div>
-
-        {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
-            Create Account
-          </h1>
-          <p className="text-sm text-zinc-600 dark:text-zinc-300 mt-2">
-            Start your AI career journey 🚀
-          </p>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-
-          <motion.input
-            whileFocus={{ scale: 1.03 }}
-            type="text"
-            placeholder="Full name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full p-3 rounded-xl bg-white/50 dark:bg-white/10 border border-white/40 outline-none text-sm backdrop-blur focus:ring-2 focus:ring-blue-400 dark:text-white"
-            required
-          />
-
-          <motion.input
-            whileFocus={{ scale: 1.03 }}
-            type="email"
-            placeholder="Email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-3 rounded-xl bg-white/50 dark:bg-white/10 border border-white/40 outline-none text-sm backdrop-blur focus:ring-2 focus:ring-blue-400 dark:text-white"
-            required
-          />
-
-          <motion.input
-            whileFocus={{ scale: 1.03 }}
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 rounded-xl bg-white/50 dark:bg-white/10 border border-white/40 outline-none text-sm backdrop-blur focus:ring-2 focus:ring-blue-400 dark:text-white"
-            required
-          />
-
-          {/* 🔐 Forgot password (optional UX) */}
-          <div className="text-right">
-            <Link
-              href="/forgot-password"
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              Forgot password?
-            </Link>
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-indigo-100 p-4 dark:from-zinc-950 dark:to-zinc-900 sm:p-8">
+      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-5xl overflow-hidden rounded-3xl border border-white/20 bg-white/70 shadow-2xl backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70 lg:grid-cols-2">
+        <div className="relative hidden lg:block">
+          <Image src="/window.svg" alt="Create account illustration" fill priority className="object-cover p-12 opacity-80" />
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-700/70 to-cyan-600/70" />
+          <div className="absolute bottom-8 left-8 right-8 text-white">
+            <h2 className="text-2xl font-bold">Build your personalized learning path</h2>
+            <p className="mt-2 text-sm text-cyan-50">Create your account to unlock AI-powered career guidance.</p>
           </div>
+        </div>
 
-          {/* Messages */}
-          {error && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-red-500 text-sm"
-            >
-              {error}
-            </motion.div>
-          )}
+        <div className="flex items-center justify-center p-6 sm:p-10">
+          <div className="w-full max-w-md space-y-5">
+            <Link href="/" className="inline-block text-sm text-blue-600 hover:underline">← Back to Home</Link>
+            <div>
+              <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">Create account</h1>
+              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Start your AI career journey.</p>
+            </div>
 
-          {success && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-green-500 text-sm"
-            >
-              {success}
-            </motion.div>
-          )}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input type="text" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm outline-none ring-blue-500 transition focus:ring-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white" required />
+              <input type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm outline-none ring-blue-500 transition focus:ring-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white" required />
+              <input type="password" placeholder="Password (min 8 chars)" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm outline-none ring-blue-500 transition focus:ring-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white" required />
 
-          {/* Button */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg disabled:opacity-60"
-          >
-            {loading ? "Creating..." : "Create account"}
-          </motion.button>
-        </form>
+              {error ? <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/40 dark:text-red-300">{error}</p> : null}
+              {success ? <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">{success}</p> : null}
 
-        {/* Footer */}
-        <p className="text-center text-sm text-zinc-700 dark:text-zinc-300 mt-6">
-          Already have an account?{" "}
-          <Link
-            href="/login"
-            className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
-          >
-            Sign in
-          </Link>
-        </p>
-      </motion.div>
+              <button disabled={loading} className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 py-3 text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60">{loading ? "Creating..." : "Create account"}</button>
+            </form>
+
+            <p className="text-sm text-zinc-600 dark:text-zinc-300">
+              Already have an account? <Link href="/login" className="font-semibold text-blue-600 hover:underline">Sign in</Link>
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,8 +1,7 @@
 "use client";
 
-import CareerPathDashboard from "@/app/components/CareerPathDashboard";
+import AdminDashboard from "@/app/components/admin/AdminDashboard";
 
 export default function DashboardPage() {
-  return <CareerPathDashboard />;
+  return <AdminDashboard />;
 }
-
