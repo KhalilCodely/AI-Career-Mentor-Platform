@@ -1,73 +1,38 @@
-"use client";
-
-import { motion } from "framer-motion";
-
 export default function Hero() {
   return (
-    <section className="relative h-screen flex items-center justify-center text-center px-6 overflow-hidden bg-gradient-to-br from-indigo-100 via-white to-blue-100 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
+    <section className="relative min-h-[85vh] flex items-center justify-center px-6 overflow-hidden bg-gradient-to-b from-indigo-50 via-white to-blue-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-[-120px] top-[-120px] h-72 w-72 rounded-full bg-blue-300/25 blur-3xl" />
+        <div className="absolute right-[-100px] bottom-[-100px] h-72 w-72 rounded-full bg-purple-300/25 blur-3xl" />
+      </div>
 
-      {/* 🔵 Animated background blobs */}
-      <motion.div
-        className="absolute w-[500px] h-[500px] bg-blue-400/30 rounded-full blur-3xl top-[-100px] left-[-100px]"
-        animate={{ x: [0, 50, 0], y: [0, 30, 0] }}
-        transition={{ duration: 10, repeat: Infinity }}
-      />
-      <motion.div
-        className="absolute w-[400px] h-[400px] bg-purple-400/30 rounded-full blur-3xl bottom-[-100px] right-[-100px]"
-        animate={{ x: [0, -40, 0], y: [0, -30, 0] }}
-        transition={{ duration: 12, repeat: Infinity }}
-      />
+      <div className="relative z-10 mx-auto max-w-3xl text-center">
+        <span className="inline-flex rounded-full border border-zinc-300/70 bg-white/80 px-4 py-1 text-sm text-zinc-700 shadow-sm backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-200">
+          Faster, cleaner, and easier to use
+        </span>
 
-      {/* 🔥 Content */}
-      <div className="relative z-10">
-        
-        <motion.h1
-          initial={{ opacity: 0, y: 60 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-black to-zinc-600 bg-clip-text text-transparent dark:from-white dark:to-zinc-400"
-        >
+        <h1 className="mt-6 text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl md:text-6xl dark:text-white">
           Build Your Career with AI
-        </motion.h1>
+        </h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 60 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="text-zinc-600 dark:text-zinc-300 mb-8 max-w-xl mx-auto"
-        >
-          Personalized career paths, resume feedback, and job matching powered by AI.
-        </motion.p>
+        <p className="mx-auto mt-5 max-w-2xl text-base text-zinc-600 sm:text-lg dark:text-zinc-300">
+          Personalized career paths, resume feedback, and job matching powered by AI, now with a lighter and faster landing experience.
+        </p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="flex justify-center gap-4"
-        >
-          {/* Primary Button */}
-          <motion.a
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <a
             href="/signup"
-            whileHover={{
-              scale: 1.08,
-              rotate: -1,
-            }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-black text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-2xl transition"
+            className="rounded-xl bg-zinc-900 px-6 py-3 text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl dark:bg-white dark:text-zinc-900"
           >
             Start Free
-          </motion.a>
-
-          {/* Secondary Button */}
-          <motion.a
+          </a>
+          <a
             href="#features"
-            whileHover={{ scale: 1.05 }}
-            className="border px-6 py-3 rounded-xl backdrop-blur bg-white/50 dark:bg-zinc-800/50"
+            className="rounded-xl border border-zinc-300 bg-white px-6 py-3 text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
           >
             Learn More
-          </motion.a>
-        </motion.div>
-
+          </a>
+        </div>
       </div>
     </section>
   );
