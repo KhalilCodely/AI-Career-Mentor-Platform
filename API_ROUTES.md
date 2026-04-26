@@ -117,6 +117,22 @@ This document outlines all registered API routes in the Tech Talks Career Mentor
 **Response**: `{ success: boolean, data: Profile, message: string }`
 **Status**: 200 | 400 | 401 | 500
 
+## User Progress Routes
+
+### GET `/api/user_progress`
+**Purpose**: Get the authenticated user's course progress records  
+**Auth**: Requires bearer token  
+**Query**: `?courseId=<courseId>` (optional)  
+**Response**: `{ success: boolean, data: UserProgress[], count: number }`  
+**Status**: 200 | 401 | 500
+
+### POST `/api/user_progress`
+**Purpose**: Create or update the authenticated user's course progress  
+**Auth**: Requires bearer token  
+**Body**: `{ courseId: string, progress: number (0-100), completed?: boolean }`  
+**Response**: `{ success: boolean, data: UserProgress, message: string }`  
+**Status**: 200 | 400 | 401 | 404 | 500
+
 ## Protected Routes
 
 ### GET `/api/protected/test`
@@ -168,6 +184,7 @@ src/app/api/
 ├── login/route.ts               (POST login)
 ├── signup/route.ts              (POST signup)
 ├── profile/route.ts             (GET/PUT profile)
+├── user_progress/route.ts       (GET/POST user progress)
 └── protected/
     └── test/
         ├── route.ts             (GET test)
