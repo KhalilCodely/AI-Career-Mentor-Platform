@@ -24,6 +24,8 @@ model User {
   email             String             @unique @db.VarChar(255)
   passwordHash      String             @map("password_hash") @db.VarChar(255)
   role              UserRole           @default(USER)
+  passwordResetToken String?           @map("password_reset_token") @db.VarChar(255)
+  passwordResetExpiresAt DateTime?     @map("password_reset_expires_at") @db.Timestamptz(6)
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
 

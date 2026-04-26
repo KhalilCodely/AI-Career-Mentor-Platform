@@ -16,6 +16,25 @@ This document outlines all registered API routes in the Tech Talks Career Mentor
 **Response**: `{ message: string, user: { id, name, email } }`  
 **Status**: 201 | 400 | 500
 
+
+### POST `/api/auth/forgot-password`
+**Purpose**: Start password reset flow
+**Body**: `{ email: string }`
+**Response**: `{ message: string, resetLink?: string }`
+**Status**: 200 | 400 | 500
+
+### POST `/api/auth/reset-password`
+**Purpose**: Complete password reset
+**Body**: `{ token: string, password: string }`
+**Response**: `{ message: string }`
+**Status**: 200 | 400 | 500
+
+### GET `/api/admin/dashboard`
+**Purpose**: Admin dashboard metrics and recent users
+**Auth**: Requires admin bearer token
+**Response**: `{ success: boolean, data: { totals, recentUsers } }`
+**Status**: 200 | 401 | 403 | 500
+
 ## Career Path Routes
 
 ### GET `/api/career_path`
