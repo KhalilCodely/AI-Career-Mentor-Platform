@@ -9,9 +9,12 @@ export async function GET(req: Request) {
       message: "You are admin 🔐",
       admin,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "Forbidden access";
+
     return NextResponse.json(
-      { error: error.message },
+      { error: message },
       { status: 403 }
     );
   }

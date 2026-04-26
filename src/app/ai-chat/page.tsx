@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Plus, MessageCircle } from 'lucide-react'
+import { Send, Plus } from 'lucide-react'
 
 // Types
 interface Message {

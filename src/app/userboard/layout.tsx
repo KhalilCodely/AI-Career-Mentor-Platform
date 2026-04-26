@@ -23,11 +23,6 @@ export default function UserboardLayout({
     }
   }, [router]);
 
-  // Close mobile sidebar on route change
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
   const navItems = [
     { label: "Skills", href: "/userboard/skills" },
     { label: "Career Path", href: "/userboard/career-path" },
