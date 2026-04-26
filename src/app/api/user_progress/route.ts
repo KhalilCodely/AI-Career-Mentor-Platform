@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        data: records.map((record) => ({
+        data: records.map((record: (typeof records)[number]) => ({
           ...formatUserProgress(record),
           course: record.course,
         })),
