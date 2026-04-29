@@ -160,6 +160,30 @@ This document outlines all registered API routes in the Tech Talks Career Mentor
 **Response**: `{ success: boolean, data: UserProgress, message: string }`  
 **Status**: 200 | 400 | 401 | 404 | 500
 
+
+## AI Chat Routes
+
+### POST `/api/AI_chat`
+**Purpose**: Send a prompt to the career mentor AI and store the exchange  
+**Auth**: Requires bearer token  
+**Body**: `{ message: string }`  
+**Response**: `{ id: string, message: string, response: string, createdAt: string }`  
+**Status**: 201 | 400 | 401 | 500
+
+### GET `/api/AI_chat/history`
+**Purpose**: Get paginated chat history for the authenticated user  
+**Auth**: Requires bearer token  
+**Query**: `?page=<number>&limit=<number>` (optional)  
+**Response**: `{ success: boolean, data: AiChat[], pagination: { page, limit, total, pages } }`  
+**Status**: 200 | 401 | 500
+
+### DELETE `/api/AI_chat/:id`
+**Purpose**: Delete a specific chat message/response pair  
+**Auth**: Requires bearer token  
+**Params**: `id: string (UUID)`  
+**Response**: `{ message: string }`  
+**Status**: 200 | 400 | 401 | 403 | 404 | 500
+
 ## Protected Routes
 
 ### GET `/api/protected/test`

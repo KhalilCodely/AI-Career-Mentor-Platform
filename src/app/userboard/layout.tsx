@@ -23,6 +23,7 @@ export default function UserboardLayout({ children }: { children: ReactNode }) {
     { label: "Skills", href: "/userboard/skills" },
     { label: "Career Path", href: "/userboard/career-path" },
     { label: "Courses", href: "/userboard/courses" },
+    { label: "AI Chat", href: "/userboard/chat" },
     { label: "Profile", href: "/userboard/profile" },
   ];
 
