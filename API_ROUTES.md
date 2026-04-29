@@ -120,6 +120,14 @@ This document outlines all registered API routes in the Tech Talks Career Mentor
 **Response**: `{ success: boolean, data: Skill, message: string }`  
 **Status**: 200 | 400 | 401 | 403 | 404 | 409 | 500
 
+## Courses Routes
+
+### GET `/api/courses`
+**Purpose**: Get all courses with their skill/category details and optional user progress  
+**Query**: `?userId=<userId>&skill=<skill>&provider=<provider>` (optional)  
+**Response**: `{ success: boolean, data: Course[], count: number }`  
+**Status**: 200 | 500
+
 
 ## Profile Routes
 
@@ -200,6 +208,8 @@ src/app/api/
 ├── skills/
 │   ├── route.ts                 (GET all, POST create)
 │   └── [id]/route.ts            (GET single, PUT update)
+├── courses/
+│   └── route.ts                 (GET all)
 ├── login/route.ts               (POST login)
 ├── signup/route.ts              (POST signup)
 ├── profile/route.ts             (GET/PUT profile)

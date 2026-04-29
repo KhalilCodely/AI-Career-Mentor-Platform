@@ -6,11 +6,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { getAuth, clearAuth } from "@/lib/auth-client";
 
-export default function UserboardLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function UserboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -26,6 +22,7 @@ export default function UserboardLayout({
   const navItems = [
     { label: "Skills", href: "/userboard/skills" },
     { label: "Career Path", href: "/userboard/career-path" },
+    { label: "Courses", href: "/userboard/courses" },
     { label: "Profile", href: "/userboard/profile" },
   ];
 
