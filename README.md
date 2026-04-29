@@ -8,8 +8,6 @@ Career Mentor platform project for Group D.
 - Hiba Yahya Mehrez
 - Chaza Raed Mohammad
 - Malak Faour
-- Yara Abdallah
-- Kassem Saadi
 
 # 🚀 Career Mentor AI – Setup Guide
 
