@@ -234,7 +234,7 @@ export default function SkillsDashboard() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden bg-gradient-to-br from-indigo-200 via-white to-blue-200 dark:from-zinc-950 dark:via-zinc-900 dark:to-black">
+    <div className="relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-100 via-white to-zinc-100 p-4 dark:from-zinc-900 dark:via-zinc-950 dark:to-black md:p-6">
       {/* Background blobs */}
       <motion.div
         className="absolute w-[500px] h-[500px] bg-blue-500/30 blur-3xl rounded-full top-[-120px] left-[-120px]"
@@ -253,7 +253,7 @@ export default function SkillsDashboard() {
         initial={{ opacity: 0, y: 60, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-5xl rounded-3xl p-8 backdrop-blur-xl bg-white/70 dark:bg-zinc-950/70 border border-white/30 dark:border-white/10 shadow-[0_20px_80px_rgba(0,0,0,0.25)]"
+        className="relative z-10 mx-auto w-full max-w-6xl rounded-3xl border border-white/30 bg-white/80 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.20)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/70 md:p-8"
       >
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -388,7 +388,7 @@ export default function SkillsDashboard() {
                       })}
                     </p>
                   </div>
-                  <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+                  <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
                     {skill.category || "Uncategorized"}
                   </span>
                 </div>
@@ -396,13 +396,13 @@ export default function SkillsDashboard() {
                   <span className="rounded-full bg-zinc-100 px-2 py-1 dark:bg-zinc-800">✨ Guided</span>
                   <span className="rounded-full bg-zinc-100 px-2 py-1 dark:bg-zinc-800">🎯 Practical</span>
                 </div>
-                <div className="mt-3 hidden rounded-xl border border-blue-200/70 bg-blue-50/80 p-3 text-xs text-blue-900 transition group-hover:block dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-100">
+                <div className="mt-3 hidden rounded-xl border border-zinc-200/80 bg-zinc-50/90 p-3 text-xs text-zinc-700 transition group-hover:block dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-200">
                   <p className="mb-2">{learnInfo.description}</p>
                   <a
                     href={learnInfo.link}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 font-medium text-blue-700 hover:bg-blue-100 dark:bg-zinc-900 dark:text-blue-200 dark:hover:bg-zinc-800"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 font-medium text-zinc-800 hover:bg-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800"
                   >
                     <span aria-hidden>📘</span>
                     <span>{learnInfo.label}</span>
