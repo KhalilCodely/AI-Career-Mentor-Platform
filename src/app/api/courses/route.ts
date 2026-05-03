@@ -1,92 +1,86 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
-const formatCourse = (course: {
-  id: string;
-  title: string;
-  provider: string;
-  url: string;
-  skillId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  skill: {
-    id: string;
-    name: string;
-    category: {
-      id: string;
-      name: string;
-    } | null;
+/**
+ * Safely normalize progress value (handles Decimal or number)
+ */
+const normalizeProgress = (value: Prisma.Decimal | number) => {
+  if (typeof value === "number") {
+    return Number(value.toFixed(2));
+  }
+  return Number(value.toNumber().toFixed(2));
+};
+
+/**
+ * Format course response
+ */
+const formatCourse = (course: any) => {
+  const progressItem = course.progress?.[0];
+
+  return {
+    id: course.id,
+    title: course.title,
+    provider: course.provider,
+    url: course.url,
+    imageUrl: course.imageUrl,
+    skillId: course.skillId,
+
+    skill: {
+      id: course.skill.id,
+      name: course.skill.name,
+      category: course.skill.category,
+    },
+
+    userProgress: progressItem
+      ? {
+          id: progressItem.id,
+          userId: progressItem.userId,
+          courseId: progressItem.courseId,
+          completed: progressItem.completed,
+          progress: normalizeProgress(progressItem.progress),
+          createdAt: progressItem.createdAt,
+          updatedAt: progressItem.updatedAt,
+        }
+      : null,
+
+    createdAt: course.createdAt,
+    updatedAt: course.updatedAt,
   };
-  progress?: {
-    id: string;
-    userId: string;
-    courseId: string;
-    completed: boolean;
-    progress: { toNumber: () => number };
-    createdAt: Date;
-    updatedAt: Date;
-  }[];
-}) => ({
-  id: course.id,
-  title: course.title,
-  provider: course.provider,
-  url: course.url,
-  skillId: course.skillId,
-  skill: {
-    id: course.skill.id,
-    name: course.skill.name,
-    category: course.skill.category,
-  },
-  userProgress: course.progress?.[0]
-    ? {
-        id: course.progress[0].id,
-        userId: course.progress[0].userId,
-        courseId: course.progress[0].courseId,
-        completed: course.progress[0].completed,
-        progress: Number(course.progress[0].progress.toNumber().toFixed(2)),
-        createdAt: course.progress[0].createdAt,
-        updatedAt: course.progress[0].updatedAt,
-      }
-    : null,
-  createdAt: course.createdAt,
-  updatedAt: course.updatedAt,
-});
+};
 
 /**
  * GET /api/courses
- * Get all courses with skill and category details.
- * Query params: userId, skill, provider (optional)
  */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get("userId")?.trim();
-    const skill = searchParams.get("skill")?.trim();
-    const provider = searchParams.get("provider")?.trim();
+
+    const userId = searchParams.get("userId")?.trim() || undefined;
+    const skill = searchParams.get("skill")?.trim() || undefined;
+    const provider = searchParams.get("provider")?.trim() || undefined;
 
     const courses = await prisma.course.findMany({
       where: {
-        ...(provider
-          ? {
-              provider: {
-                equals: provider,
+        ...(provider && {
+          provider: {
+            equals: provider,
+            mode: "insensitive",
+          },
+        }),
+
+        ...(skill && {
+          skill: {
+            is: {
+              name: {
+                equals: skill,
                 mode: "insensitive",
               },
-            }
-          : {}),
-        ...(skill
-          ? {
-              skill: {
-                is: {
-                  name: {
-                    equals: skill,
-                    mode: "insensitive",
-                  },
-                },
-              },
-            }
-          : {}),
+            },
+          },
+        }),
       },
+
       include: {
         skill: {
           select: {
@@ -100,17 +94,16 @@ export async function GET(request: NextRequest) {
             },
           },
         },
+
         progress: userId
           ? {
-              where: {
-                userId,
-              },
-              orderBy: {
-                updatedAt: "desc",
-              },
+              where: { userId },
+              orderBy: { updatedAt: "desc" },
+              take: 1, // 🔥 optimization (only need latest)
             }
-          : false,
+          : undefined, // ✅ FIXED (no false)
       },
+
       orderBy: {
         createdAt: "desc",
       },
@@ -126,6 +119,7 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error("GET /api/courses error:", error);
+
     return NextResponse.json(
       {
         success: false,
