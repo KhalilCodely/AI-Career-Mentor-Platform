@@ -17,9 +17,16 @@ export async function POST(request: NextRequest) {
 
     const careerPath = await prisma.careerPath.create({
       data: {
-        title: `${generated.title} (Custom)`.
-trim(),
+        title: `${generated.title} (Custom)`.trim(),
         description: generated.description,
+      },
+    });
+
+    const enrollment = await prisma.userCareerPath.create({
+      data: {
+        userId: user.userId,
+        careerPathId: careerPath.id,
+        progress: 0,
       },
     });
 
@@ -27,11 +34,12 @@ trim(),
       success: true,
       data: {
         ...careerPath,
+        enrollment,
         generatedByUserId: user.userId,
         roadmap: generated.roadmap,
         aiRecommendations: generated.roadmap.flatMap((step) => step.aiRecommendations),
       },
-      message: "Custom career path generated successfully",
+      message: "Custom career path generated and enrolled successfully",
     });
   } catch (error) {
     if (error instanceof Error && error.message.includes("No authorization header")) {
