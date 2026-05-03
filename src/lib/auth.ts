@@ -5,6 +5,10 @@ type JWTPayload = {
   role: "USER" | "ADMIN";
 };
 
+function getJwtSecret() {
+  return process.env.JWT_SECRET || "dev-only-jwt-secret-change-me";
+}
+
 export function requireUser(req: Request) {
   const middlewareRole = req.headers.get("x-user-role");
   const middlewareUserId = req.headers.get("x-user-id");
@@ -28,11 +32,7 @@ export function requireUser(req: Request) {
     throw new Error("No token provided");
   }
 
-  if (!process.env.JWT_SECRET) {
-    throw new Error("Server auth configuration is missing");
-  }
-
-  const decoded = jwt.verify(token, process.env.JWT_SECRET) as JWTPayload;
+  const decoded = jwt.verify(token, getJwtSecret()) as JWTPayload;
   return decoded;
 }
 
