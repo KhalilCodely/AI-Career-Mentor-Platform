@@ -40,6 +40,9 @@ export default function CareerPathDashboard() {
   const [enrolled, setEnrolled] = useState<UserEnrollment[]>([]);
   const [selectedPath, setSelectedPath] = useState<CareerPath | null>(null);
   const [goal, setGoal] = useState("");
+  const [currentSkills, setCurrentSkills] = useState("");
+  const [experienceLevel, setExperienceLevel] = useState("beginner");
+  const [constraints, setConstraints] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -142,13 +145,20 @@ export default function CareerPathDashboard() {
     setSuccess("");
 
     try {
+      const composedGoal = [
+        `career_goal: ${goal.trim()}`,
+        `experience_level: ${experienceLevel}`,
+        `current_skills: ${currentSkills.trim() || "not provided"}`,
+        `constraints: ${constraints.trim() || "not provided"}`,
+      ].join(" | ");
+
       const res = await fetch("/api/career_path/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${auth.token}`,
         },
-        body: JSON.stringify({ goal: goal.trim() }),
+        body: JSON.stringify({ goal: composedGoal }),
       });
 
       const json = await res.json();
@@ -158,6 +168,8 @@ export default function CareerPathDashboard() {
       }
 
       setGoal("");
+      setCurrentSkills("");
+      setConstraints("");
       setSuccess("Roadmap generated and enrolled successfully.");
       await loadData();
     } catch (e) {
@@ -179,14 +191,39 @@ export default function CareerPathDashboard() {
 
       <form onSubmit={generateRoadmap} className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200 mb-2">Generate custom roadmap</label>
-        <div className="flex gap-2">
+        <div className="grid gap-3 md:grid-cols-2">
           <input
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
-            placeholder="Example: Become a Senior Frontend Engineer"
-            className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+            placeholder="Career goal (e.g., Frontend Developer)"
+            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
           />
-          <button disabled={busy} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">Generate</button>
+          <select
+            value={experienceLevel}
+            onChange={(e) => setExperienceLevel(e.target.value)}
+            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          >
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+          <input
+            value={currentSkills}
+            onChange={(e) => setCurrentSkills(e.target.value)}
+            placeholder="Current skills (comma separated)"
+            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          />
+          <input
+            value={constraints}
+            onChange={(e) => setConstraints(e.target.value)}
+            placeholder="Constraints (time, budget, etc.)"
+            className="rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          />
+        </div>
+        <div className="mt-3">
+          <button disabled={busy} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
+            Generate
+          </button>
         </div>
       </form>
 
