@@ -224,7 +224,9 @@ export default function CoursesDashboard() {
                   />
                 </div>
                 <p className="text-xs mt-1 text-zinc-500">
-                  {Math.round(progress)}%
+                  {course.userProgress?.completed
+                    ? "Completed • 100%"
+                    : `${Math.round(progress)}%`}
                 </p>
               </div>
 
