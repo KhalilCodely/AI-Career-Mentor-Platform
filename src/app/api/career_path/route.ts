@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { CAREER_PATH_TEMPLATES } from "@/lib/career-path-catalog";
 
 /**
  * GET /api/career_path
@@ -39,11 +40,16 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    const enriched = careerPaths.map((path) => {
+      const template = CAREER_PATH_TEMPLATES.find((t) => t.title.toLowerCase() === path.title.toLowerCase());
+      return { ...path, roadmap: template?.roadmap ?? [], aiRecommendations: template?.roadmap.flatMap((s) => s.aiRecommendations) ?? [] };
+    });
+
     return NextResponse.json(
       {
         success: true,
-        data: careerPaths,
-        count: careerPaths.length,
+        data: enriched,
+          count: enriched.length,
       },
       { status: 200 }
     );
@@ -141,5 +147,35 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * PATCH /api/career_path
+ * Seed up to 40 career paths from built-in catalog (admin only)
+ */
+export async function PATCH(request: NextRequest) {
+  try {
+    requireAdmin(request);
+
+    const templates = CAREER_PATH_TEMPLATES.slice(0, 40);
+    const result = await prisma.$transaction(
+      templates.map((template) =>
+        prisma.careerPath.upsert({
+          where: { title: template.title },
+          update: { description: template.description },
+          create: { title: template.title, description: template.description },
+        })
+      )
+    );
+
+    return NextResponse.json({ success: true, data: result, count: result.length, message: "Career path catalog synced" }, { status: 200 });
+  } catch (error) {
+    if (error instanceof Error && (error.message.includes("No authorization header") || error.message.includes("Forbidden"))) {
+      return NextResponse.json({ success: false, error: "Unauthorized - Admin access required" }, { status: 401 });
+    }
+
+    console.error("PATCH /api/career_path error:", error);
+    return NextResponse.json({ success: false, error: "Failed to seed career paths" }, { status: 500 });
   }
 }
