@@ -102,6 +102,7 @@ model CareerPath {
   id          String           @id @default(uuid()) @db.Uuid
   title       String           @unique @db.VarChar(160)
   description String?          @db.Text
+  roadmap     Json?
   createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
 
