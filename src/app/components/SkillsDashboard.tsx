@@ -26,6 +26,46 @@ type CreateSkillResponse = {
   error?: string;
 };
 
+const buildSkillLearnInfo = (skill: Skill) => {
+  const fallbackDescription = `Build practical knowledge in ${skill.name} with beginner-friendly tutorials and projects.`;
+  const slug = encodeURIComponent(skill.name);
+
+  const curatedByCategory: Record<string, { description: string; link: string; label: string }> = {
+    frontend: {
+      description: "Learn to build interactive UI with modern HTML, CSS, JavaScript, and frameworks.",
+      link: `https://www.freecodecamp.org/news/search/?query=${slug}`,
+      label: "Frontend guide",
+    },
+    backend: {
+      description: "Understand APIs, databases, authentication, and server-side architecture.",
+      link: `https://roadmap.sh/backend`,
+      label: "Backend roadmap",
+    },
+    devops: {
+      description: "Master CI/CD, containers, cloud deployment, and monitoring fundamentals.",
+      link: `https://roadmap.sh/devops`,
+      label: "DevOps roadmap",
+    },
+    data: {
+      description: "Practice data cleaning, visualization, SQL, and analytical storytelling.",
+      link: `https://www.kaggle.com/learn`,
+      label: "Kaggle learning",
+    },
+  };
+
+  const categoryKey = (skill.category || "").toLowerCase();
+  const matchedCategory = Object.keys(curatedByCategory).find((key) => categoryKey.includes(key));
+  if (matchedCategory) {
+    return curatedByCategory[matchedCategory];
+  }
+
+  return {
+    description: fallbackDescription,
+    link: `https://www.coursera.org/search?query=${slug}`,
+    label: `Learn ${skill.name}`,
+  };
+};
+
 export default function SkillsDashboard() {
   const router = useRouter();
 
@@ -194,7 +234,7 @@ export default function SkillsDashboard() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden bg-gradient-to-br from-indigo-200 via-white to-blue-200 dark:from-zinc-950 dark:via-zinc-900 dark:to-black">
+    <div className="relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-100 via-white to-zinc-100 p-4 dark:from-zinc-900 dark:via-zinc-950 dark:to-black md:p-6">
       {/* Background blobs */}
       <motion.div
         className="absolute w-[500px] h-[500px] bg-blue-500/30 blur-3xl rounded-full top-[-120px] left-[-120px]"
@@ -213,16 +253,24 @@ export default function SkillsDashboard() {
         initial={{ opacity: 0, y: 60, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-5xl rounded-3xl p-8 backdrop-blur-xl bg-white/70 dark:bg-zinc-950/70 border border-white/30 dark:border-white/10 shadow-[0_20px_80px_rgba(0,0,0,0.25)]"
+        className="relative z-10 mx-auto w-full max-w-6xl rounded-3xl border border-white/30 bg-white/80 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.20)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/70 md:p-8"
       >
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
+            <h1 className="bg-gradient-to-r from-zinc-900 via-blue-700 to-purple-700 bg-clip-text text-3xl font-bold text-transparent dark:from-white dark:via-blue-300 dark:to-purple-300">
               Skills Management
             </h1>
             <p className="text-sm text-zinc-600 dark:text-zinc-300 mt-2">
-              Browse your platform skill library, filter by category, and add new skills.
+              Browse your skill library, hover for learning guidance, and curate your growth path.
             </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs sm:flex sm:items-center">
+            <div className="rounded-xl border border-white/40 bg-white/70 px-3 py-2 font-medium text-zinc-700 shadow-sm dark:border-white/10 dark:bg-zinc-900/70 dark:text-zinc-200">
+              Total Skills: <span className="text-blue-600 dark:text-blue-300">{skills.length}</span>
+            </div>
+            <div className="rounded-xl border border-white/40 bg-white/70 px-3 py-2 font-medium text-zinc-700 shadow-sm dark:border-white/10 dark:bg-zinc-900/70 dark:text-zinc-200">
+              Categories: <span className="text-purple-600 dark:text-purple-300">{categories.length}</span>
+            </div>
           </div>
         </div>
 
@@ -319,8 +367,13 @@ export default function SkillsDashboard() {
               <motion.div
                 key={skill.id}
                 whileHover={{ y: -4, scale: 1.01 }}
-                className="rounded-2xl border border-white/40 bg-white/80 p-5 shadow-md dark:border-white/5 dark:bg-zinc-900/90"
+                className="group relative overflow-hidden rounded-2xl border border-white/40 bg-white/80 p-5 shadow-md transition-all duration-300 hover:shadow-xl dark:border-white/5 dark:bg-zinc-900/90"
               >
+                {(() => {
+                  const learnInfo = buildSkillLearnInfo(skill);
+                  return (
+                    <>
+                <div className="pointer-events-none absolute right-0 top-0 h-20 w-20 translate-x-8 -translate-y-8 rounded-full bg-blue-400/20 blur-2xl dark:bg-blue-500/20" />
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="text-base font-semibold text-zinc-900 dark:text-white">
@@ -335,10 +388,30 @@ export default function SkillsDashboard() {
                       })}
                     </p>
                   </div>
-                  <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+                  <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
                     {skill.category || "Uncategorized"}
                   </span>
                 </div>
+                <div className="mt-3 flex items-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+                  <span className="rounded-full bg-zinc-100 px-2 py-1 dark:bg-zinc-800">✨ Guided</span>
+                  <span className="rounded-full bg-zinc-100 px-2 py-1 dark:bg-zinc-800">🎯 Practical</span>
+                </div>
+                <div className="mt-3 hidden rounded-xl border border-zinc-200/80 bg-zinc-50/90 p-3 text-xs text-zinc-700 transition group-hover:block dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-200">
+                  <p className="mb-2">{learnInfo.description}</p>
+                  <a
+                    href={learnInfo.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 font-medium text-zinc-800 hover:bg-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    <span aria-hidden>📘</span>
+                    <span>{learnInfo.label}</span>
+                    <span aria-hidden>↗</span>
+                  </a>
+                </div>
+                    </>
+                  );
+                })()}
               </motion.div>
             ))}
           </div>
@@ -415,4 +488,3 @@ export default function SkillsDashboard() {
     </div>
   );
 }
-

@@ -9,6 +9,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
     const { userId, careerPathId, progress } = body;
+    const isCompleted = progress === 100;
 
     if (!userId || !careerPathId || progress === undefined) {
       return NextResponse.json(
@@ -63,6 +64,8 @@ export async function PATCH(request: NextRequest) {
       },
       data: {
         progress: progress,
+        completed: isCompleted,
+        completedAt: isCompleted ? new Date() : null,
       },
       include: {
         careerPath: true,
