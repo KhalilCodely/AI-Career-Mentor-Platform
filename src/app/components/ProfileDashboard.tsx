@@ -124,7 +124,7 @@ export default function ProfileDashboard() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden bg-gradient-to-br from-indigo-200 via-white to-blue-200 dark:from-zinc-950 dark:via-zinc-900 dark:to-black">
+    <div className="relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-200 via-white to-blue-200 px-6 py-8 dark:from-zinc-950 dark:via-zinc-900 dark:to-black">
       <motion.div
         className="absolute w-[500px] h-[500px] bg-blue-500/30 blur-3xl rounded-full top-[-120px] left-[-120px]"
         animate={{ x: [0, 50, 0], y: [0, 40, 0] }}
@@ -141,7 +141,7 @@ export default function ProfileDashboard() {
         initial={{ opacity: 0, y: 60, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6 }}
-        className="relative z-10 w-full max-w-3xl rounded-3xl p-8 backdrop-blur-xl bg-white/70 dark:bg-zinc-950/70 border border-white/30 dark:border-white/10 shadow-[0_20px_80px_rgba(0,0,0,0.25)]"
+        className="relative z-10 mx-auto w-full max-w-3xl rounded-3xl border border-white/30 bg-white/70 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.25)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/70"
       >
         <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
           My Profile

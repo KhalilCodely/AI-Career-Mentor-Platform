@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import { CAREER_PATH_TEMPLATES } from "@/lib/career-path-catalog";
+import { CAREER_PATH_TEMPLATES, type RoadmapStep } from "@/lib/career-path-catalog";
 
 /**
  * GET /api/career_path
@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
 
     // Otherwise, get all career paths
     const careerPaths = await prisma.careerPath.findMany({
+      take: 20,
       orderBy: {
         createdAt: "desc",
       },
@@ -42,7 +43,8 @@ export async function GET(request: NextRequest) {
 
     const enriched = careerPaths.map((path) => {
       const template = CAREER_PATH_TEMPLATES.find((t) => t.title.toLowerCase() === path.title.toLowerCase());
-      return { ...path, roadmap: template?.roadmap ?? [], aiRecommendations: template?.roadmap.flatMap((s) => s.aiRecommendations) ?? [] };
+      const roadmap = (path.roadmap as RoadmapStep[] | null) ?? template?.roadmap ?? [];
+      return { ...path, roadmap, aiRecommendations: roadmap.flatMap((s) => s.aiRecommendations) };
     });
 
     return NextResponse.json(
@@ -74,7 +76,7 @@ export async function POST(request: NextRequest) {
     requireAdmin(request);
 
     const body = await request.json();
-    const { title, description } = body;
+    const { title, description, roadmap } = body;
 
     if (!title || typeof title !== "string") {
       return NextResponse.json(
@@ -105,6 +107,7 @@ export async function POST(request: NextRequest) {
       data: {
         title: title.trim(),
         description: description ? description.trim() : null,
+        roadmap: roadmap ?? null,
       },
     });
 
@@ -152,19 +155,19 @@ export async function POST(request: NextRequest) {
 
 /**
  * PATCH /api/career_path
- * Seed up to 40 career paths from built-in catalog (admin only)
+ * Seed up to 20 career paths from built-in catalog (admin only)
  */
 export async function PATCH(request: NextRequest) {
   try {
     requireAdmin(request);
 
-    const templates = CAREER_PATH_TEMPLATES.slice(0, 40);
+    const templates = CAREER_PATH_TEMPLATES.slice(0, 20);
     const result = await prisma.$transaction(
       templates.map((template) =>
         prisma.careerPath.upsert({
           where: { title: template.title },
-          update: { description: template.description },
-          create: { title: template.title, description: template.description },
+          update: { description: template.description, roadmap: template.roadmap },
+          create: { title: template.title, description: template.description, roadmap: template.roadmap },
         })
       )
     );

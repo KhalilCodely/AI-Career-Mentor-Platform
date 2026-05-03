@@ -1,0 +1,3 @@
+ALTER TABLE "user_progress"
+  ADD COLUMN "started_at" TIMESTAMPTZ(6) NOT NULL DEFAULT NOW(),
+  ADD COLUMN "completed_at" TIMESTAMPTZ(6);

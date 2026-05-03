@@ -102,6 +102,7 @@ model CareerPath {
   id          String           @id @default(uuid()) @db.Uuid
   title       String           @unique @db.VarChar(160)
   description String?          @db.Text
+  roadmap     Json?
   createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -115,6 +116,9 @@ model UserCareerPath {
   userId       String     @map("user_id") @db.Uuid
   careerPathId String     @map("career_path_id") @db.Uuid
   progress     Decimal    @default(0) @db.Decimal(5, 2)
+  completed    Boolean    @default(false)
+  startedAt    DateTime   @default(now()) @map("started_at") @db.Timestamptz(6)
+  completedAt  DateTime?  @map("completed_at") @db.Timestamptz(6)
   createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -178,6 +182,8 @@ model UserProgress {
   courseId  String   @map("course_id") @db.Uuid
   completed Boolean  @default(false)
   progress  Decimal  @default(0) @db.Decimal(5, 2)
+  startedAt DateTime @default(now()) @map("started_at") @db.Timestamptz(6)
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 

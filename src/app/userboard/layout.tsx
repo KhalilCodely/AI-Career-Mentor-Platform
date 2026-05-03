@@ -19,10 +19,9 @@ export default function UserboardLayout({ children }: { children: ReactNode }) {
   }, [auth, router]);
 
   const navItems = [
+    { label: "Dashboard", href: "/userboard" },
     { label: "Skills", href: "/userboard/skills" },
-    { label: "Career Paths", href: "/userboard/career-path" },
     { label: "Courses", href: "/userboard/courses" },
-    { label: "Profile", href: "/userboard/profile" },
   ];
 
   const initials = auth?.user?.name
@@ -71,7 +70,7 @@ export default function UserboardLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3">
             <Link
               href="/userboard/profile"
-              className="flex items-center gap-2 rounded-full border border-zinc-200 dark:border-zinc-700 px-2 py-1 pr-3 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              className="flex items-center gap-2 rounded-full border border-zinc-200 px-2 py-1 pr-3 transition-all duration-200 hover:scale-[1.02] hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
             >
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
                 {initials}
