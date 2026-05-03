@@ -49,6 +49,7 @@ export default function CoursesDashboard() {
   const [skillFilter, setSkillFilter] = useState("");
   const [providerFilter, setProviderFilter] = useState("");
   const [error, setError] = useState("");
+  const [updatingCourseId, setUpdatingCourseId] = useState<string | null>(null);
 
   useEffect(() => {
     const auth = getAuth();
@@ -63,9 +64,11 @@ export default function CoursesDashboard() {
       setError("");
 
       try {
-        const res = await fetch(
-          `/api/courses?userId=${encodeURIComponent(auth.user.id)}`
-        );
+        const res = await fetch("/api/courses", {
+          headers: {
+            Authorization: `Bearer ${auth.token}`,
+          },
+        });
         const data = (await res.json()) as CoursesResponse;
 
         if (!res.ok || !data.success) {
@@ -130,6 +133,53 @@ export default function CoursesDashboard() {
 
     return Math.round(total / courses.length);
   }, [courses]);
+
+  const handleProgressUpdate = async (courseId: string, nextProgress: number) => {
+    const auth = getAuth();
+    if (!auth) {
+      router.replace("/login");
+      return;
+    }
+
+    const clamped = Math.max(0, Math.min(100, nextProgress));
+    setUpdatingCourseId(courseId);
+    setError("");
+
+    try {
+      const res = await fetch("/api/user_progress", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify({
+          courseId,
+          progress: clamped,
+          completed: clamped >= 100,
+        }),
+      });
+
+      const data = (await res.json()) as {
+        success: boolean;
+        data?: Course["userProgress"];
+        error?: string;
+      };
+
+      if (!res.ok || !data.success || !data.data) {
+        throw new Error(data.error || "Failed to save progress");
+      }
+
+      setCourses((prev) =>
+        prev.map((course) =>
+          course.id === courseId ? { ...course, userProgress: data.data ?? null } : course
+        )
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to save progress.");
+    } finally {
+      setUpdatingCourseId(null);
+    }
+  };
 
   return (
     <div className="relative min-h-screen flex items-center justify-center px-6 overflow-hidden bg-gradient-to-br from-indigo-200 via-white to-blue-200 dark:from-zinc-950 dark:via-zinc-900 dark:to-black">
@@ -321,6 +371,27 @@ export default function CoursesDashboard() {
                             style={{ width: `${progress}%` }}
                           />
                         </div>
+                      </div>
+
+                      <div className="mt-3">
+                        <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
+                          Update progress
+                        </label>
+                        <input
+                          type="range"
+                          min={0}
+                          max={100}
+                          step={5}
+                          disabled={updatingCourseId === course.id}
+                          value={Math.round(progress)}
+                          onChange={(event) => {
+                            void handleProgressUpdate(
+                              course.id,
+                              Number(event.currentTarget.value)
+                            );
+                          }}
+                          className="w-full accent-blue-600"
+                        />
                       </div>
 
                       <div className="mt-4 flex justify-end">

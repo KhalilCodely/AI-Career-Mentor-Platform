@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
 
 const formatCourse = (course: {
   id: string;
@@ -55,12 +56,12 @@ const formatCourse = (course: {
 /**
  * GET /api/courses
  * Get all courses with skill and category details.
- * Query params: userId, skill, provider (optional)
+ * Query params: skill, provider (optional)
  */
 export async function GET(request: NextRequest) {
   try {
+    const authUser = requireUser(request);
     const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get("userId")?.trim();
     const skill = searchParams.get("skill")?.trim();
     const provider = searchParams.get("provider")?.trim();
 
@@ -100,16 +101,14 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        progress: userId
-          ? {
+        progress: {
               where: {
-                userId,
+                userId: authUser.userId,
               },
               orderBy: {
                 updatedAt: "desc",
               },
-            }
-          : false,
+            },
       },
       orderBy: {
         createdAt: "desc",
@@ -125,6 +124,16 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    if (error instanceof Error && error.message.includes("No authorization header")) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Unauthorized",
+        },
+        { status: 401 }
+      );
+    }
+
     console.error("GET /api/courses error:", error);
     return NextResponse.json(
       {
