@@ -95,6 +95,11 @@ export default function CareerPathDashboard() {
     [enrollments]
   );
 
+  const enrollmentByPathId = useMemo(
+    () => new Map(enrollments.map((enrollment) => [enrollment.careerPathId, enrollment])),
+    [enrollments]
+  );
+
   const averageProgress = useMemo(() => {
     if (enrollments.length === 0) return 0;
     const total = enrollments.reduce((sum, e) => sum + Number(e.progress || 0), 0);
@@ -435,6 +440,10 @@ export default function CareerPathDashboard() {
                   {allPaths.map((path) => {
                     const isEnrolled = enrolledIds.has(path.id);
                     const isBusy = actionLoadingId === path.id;
+                    const enrollment = enrollmentByPathId.get(path.id);
+                    const enrollmentProgress = enrollment
+                      ? Math.min(100, Math.max(0, Math.round(Number(enrollment.progress))))
+                      : 0;
 
                     return (
                       <motion.div
@@ -451,9 +460,20 @@ export default function CareerPathDashboard() {
                           </p>
                         )}
 
+                        {isEnrolled && (
+                          <div className="mt-4">
+                            <div className="h-2 w-full rounded-full bg-zinc-200 dark:bg-zinc-800">
+                              <div
+                                className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+                                style={{ width: `${enrollmentProgress}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
                         <div className="mt-4 flex items-center justify-between">
                           <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                            {isEnrolled ? "Already enrolled" : "Not enrolled yet"}
+                            {isEnrolled ? `Enrolled · ${enrollmentProgress}% complete` : "Not enrolled yet"}
                           </span>
 
                           <motion.button
