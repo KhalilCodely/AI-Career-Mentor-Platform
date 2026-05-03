@@ -19,8 +19,8 @@ export default function UserboardLayout({ children }: { children: ReactNode }) {
   }, [auth, router]);
 
   const navItems = [
+    { label: "Dashboard", href: "/userboard" },
     { label: "Skills", href: "/userboard/skills" },
-    { label: "Career Paths", href: "/userboard/career-path" },
     { label: "Courses", href: "/userboard/courses" },
     { label: "Profile", href: "/userboard/profile" },
   ];

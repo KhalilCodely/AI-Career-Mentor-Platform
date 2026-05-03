@@ -76,6 +76,8 @@ export async function POST(request: NextRequest) {
         userId,
         careerPathId,
         progress: 0,
+        completed: false,
+        startedAt: new Date(),
       },
       include: {
         careerPath: true,

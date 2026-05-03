@@ -35,6 +35,8 @@ const formatUserProgress = (record: {
   courseId: string;
   progress: { toNumber: () => number };
   completed: boolean;
+  startedAt: Date;
+  completedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }) => ({
@@ -43,6 +45,8 @@ const formatUserProgress = (record: {
   courseId: record.courseId,
   progress: Number(record.progress.toNumber().toFixed(2)),
   completed: record.completed,
+  startedAt: record.startedAt,
+  completedAt: record.completedAt,
   createdAt: record.createdAt,
   updatedAt: record.updatedAt,
 });
@@ -181,12 +185,20 @@ export async function POST(request: NextRequest) {
       update: {
         progress: normalizedProgress,
         ...(normalizedCompleted !== undefined ? { completed: normalizedCompleted } : {}),
+        completedAt:
+          normalizedCompleted === true || normalizedProgress === 100
+            ? new Date()
+            : normalizedCompleted === false || normalizedProgress < 100
+            ? null
+            : undefined,
       },
       create: {
         userId: authUser.userId,
         courseId,
         progress: normalizedProgress,
         completed: normalizedCompleted ?? normalizedProgress === 100,
+        startedAt: new Date(),
+        completedAt: (normalizedCompleted ?? normalizedProgress === 100) ? new Date() : null,
       },
       include: {
         course: {
