@@ -35,9 +35,26 @@ model User {
   aiChats           AiChat[]
   aiRecommendations AiRecommendation[]
   userProgress      UserProgress[]
+  resumeReviews     ResumeReview[]
 
   @@index([createdAt], map: "idx_users_created_at")
   @@map("users")
+}
+
+model ResumeReview {
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @map("user_id") @db.Uuid
+  resumeText         String   @map("resume_text") @db.Text
+  score              Int      @db.SmallInt
+  suggestions        String   @db.Text
+  improvedResumeText String?  @map("improved_resume_text") @db.Text
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt], map: "idx_resume_reviews_user_created")
+  @@map("resume_reviews")
 }
 
 model Profile {
