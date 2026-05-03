@@ -56,7 +56,7 @@ export default function CoursesDashboard() {
         }
 
         setCourses(data.data || []);
-      } catch (e) {
+      } catch {
         setError("Failed to load courses");
       } finally {
         setLoading(false);
@@ -143,10 +143,10 @@ export default function CoursesDashboard() {
 
       {/* FILTER */}
       <div className="flex gap-2">
-        {["all", "completed", "incomplete"].map((f) => (
+        {(["all", "completed", "incomplete"] as const).map((f) => (
           <button
             key={f}
-            onClick={() => setFilter(f as any)}
+            onClick={() => setFilter(f)}
             className={`px-3 py-1 rounded-full text-sm border ${
               filter === f
                 ? "bg-blue-600 text-white"
@@ -242,16 +242,19 @@ export default function CoursesDashboard() {
                 <button
                   onClick={() => handleCompletionToggle(course)}
                   disabled={savingCourseId === course.id}
+                  aria-pressed={Boolean(course.userProgress?.completed)}
                   className={`px-3 py-1 text-sm rounded-lg flex items-center gap-1 ${
                     course.userProgress?.completed
-                      ? "bg-gray-500"
+                      ? "bg-gray-600"
                       : "bg-emerald-600"
                   } text-white disabled:opacity-50`}
                 >
                   <CheckCircle2 className="h-4 w-4" />
-                  {course.userProgress?.completed
-                    ? "Completed"
-                    : "Complete"}
+                  {savingCourseId === course.id
+                    ? "Saving..."
+                    : course.userProgress?.completed
+                    ? "Mark not completed"
+                    : "Mark completed"}
                 </button>
               </div>
             </div>
