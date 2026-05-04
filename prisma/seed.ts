@@ -3,37 +3,108 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  // create categories
-  const dev = await prisma.category.upsert({
-    where: { name: "Development" },
-    update: {},
-    create: { name: "Development" },
-  });
+  const data = [
+    {
+      name: "Development",
+      skills: [
+        "JavaScript",
+        "TypeScript",
+        "React",
+        "Next.js",
+        "Node.js",
+        "Express.js",
+        "HTML",
+        "CSS",
+        "Tailwind CSS",
+        "REST API",
+        "GraphQL",
+        "Redux",
+      ],
+    },
+    {
+      name: "Data",
+      skills: [
+        "Python",
+        "SQL",
+        "PostgreSQL",
+        "MongoDB",
+        "Machine Learning",
+        "Data Analysis",
+        "Pandas",
+        "NumPy",
+        "Data Visualization",
+        "Power BI",
+      ],
+    },
+    {
+      name: "DevOps",
+      skills: [
+        "Docker",
+        "Kubernetes",
+        "CI/CD",
+        "GitHub Actions",
+        "AWS",
+        "Linux",
+        "Nginx",
+        "Terraform",
+      ],
+    },
+    {
+      name: "Design",
+      skills: [
+        "UI Design",
+        "UX Design",
+        "Figma",
+        "Adobe XD",
+        "Wireframing",
+        "Prototyping",
+      ],
+    },
+    {
+      name: "Mobile",
+      skills: [
+        "React Native",
+        "Flutter",
+        "Swift",
+        "Kotlin",
+      ],
+    },
+  ];
 
-  const data = await prisma.category.upsert({
-    where: { name: "Data" },
-    update: {},
-    create: { name: "Data" },
-  });
+  for (const category of data) {
+    // ✅ create or get category
+    const dbCategory = await prisma.category.upsert({
+      where: { name: category.name },
+      update: {},
+      create: { name: category.name },
+    });
 
-  // create skills
-  await prisma.skill.createMany({
-    data: [
-      { name: "JavaScript", categoryId: dev.id },
-      { name: "React", categoryId: dev.id },
-      { name: "Node.js", categoryId: dev.id },
-      { name: "Next.js", categoryId: dev.id },
-      { name: "TypeScript", categoryId: dev.id },
-      { name: "Python", categoryId: data.id },
-      { name: "SQL", categoryId: data.id },
-      { name: "Machine Learning", categoryId: data.id },
-    ],
-    skipDuplicates: true,
-  });
+    // ✅ create skills
+    for (const skillName of category.skills) {
+      await prisma.skill.upsert({
+        where: {
+          name_categoryId: {
+            name: skillName,
+            categoryId: dbCategory.id,
+          },
+        },
+        update: {},
+        create: {
+          name: skillName,
+          categoryId: dbCategory.id,
+        },
+      });
+    }
+  }
 
-  console.log("✅ Skills seeded");
+  console.log("✅ 40+ skills seeded successfully");
 }
 
 main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect());
+  .catch((e) => {
+    console.error("❌ SEED ERROR:", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
