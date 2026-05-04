@@ -5,7 +5,9 @@ import { createToken } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const body = await req.json();
+
+    const { email, password } = body;
 
     // ✅ validation
     if (!email || !password) {
@@ -27,7 +29,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ check password
+    // ✅ compare password
     const valid = await bcrypt.compare(password, user.passwordHash);
 
     if (!valid) {
@@ -48,10 +50,10 @@ export async function POST(req: Request) {
       role: user.role,
     });
 
-    // ✅ set cookie
+    // ✅ cookie
     response.cookies.set("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // ⚠️ TEMP FIX (important!)
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
     });
@@ -59,7 +61,7 @@ export async function POST(req: Request) {
     return response;
 
   } catch (error) {
-    console.error("LOGIN ERROR:", error);
+    console.error("🔥 LOGIN CRASH:", error);
 
     return NextResponse.json(
       { error: "Server error" },
