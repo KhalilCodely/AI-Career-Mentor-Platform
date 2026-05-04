@@ -7,15 +7,32 @@ import {
   User,
   BookOpen,
   Brain,
+  Map,
   LogOut,
   Menu,
 } from "lucide-react";
 
-const navItems = [
-  { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { name: "Profile", icon: User, path: "/dashboard/profile" },
-  { name: "Courses", icon: BookOpen, path: "/dashboard/courses" },
-  { name: "Skills", icon: Brain, path: "/dashboard/skills" },
+const navSections = [
+  {
+    title: "Main",
+    items: [
+      { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+      { name: "Roadmap", icon: Map, path: "/dashboard/roadmap" }, // ✅ ADDED
+    ],
+  },
+  {
+    title: "Profile",
+    items: [
+      { name: "Profile", icon: User, path: "/dashboard/profile" },
+      { name: "Skills", icon: Brain, path: "/dashboard/skills" },
+    ],
+  },
+  {
+    title: "Learning",
+    items: [
+      { name: "Courses", icon: BookOpen, path: "/dashboard/courses" },
+    ],
+  },
 ];
 
 export default function Sidebar() {
@@ -32,7 +49,7 @@ export default function Sidebar() {
   return (
     <aside
       className={`
-        bg-black text-white h-screen flex flex-col border-r
+        bg-black text-white h-screen flex flex-col border-r border-gray-800
         transition-all duration-300
         ${collapsed ? "w-20" : "w-64"}
       `}
@@ -40,7 +57,7 @@ export default function Sidebar() {
       {/* HEADER */}
       <div className="flex items-center justify-between px-4 py-4 border-b border-gray-800">
         {!collapsed && (
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-lg font-semibold tracking-tight">
             Career Mentor
           </h2>
         )}
@@ -54,36 +71,48 @@ export default function Sidebar() {
       </div>
 
       {/* NAVIGATION */}
-      <nav className="flex-1 px-2 py-4 space-y-1">
-        {navItems.map((item) => {
-          const isActive = pathname === item.path;
-          const Icon = item.icon;
+      <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-6">
 
-          return (
-            <button
-              key={item.name}
-              onClick={() => router.push(item.path)}
-              className={`
-                w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition
-                ${
-                  isActive
-                    ? "bg-white text-black font-medium"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                }
-              `}
-            >
-              <Icon size={18} />
+        {navSections.map((section) => (
+          <div key={section.title}>
+            {!collapsed && (
+              <p className="text-xs text-gray-500 uppercase px-3 mb-2">
+                {section.title}
+              </p>
+            )}
 
-              {!collapsed && <span>{item.name}</span>}
-            </button>
-          );
-        })}
+            <div className="space-y-1">
+              {section.items.map((item) => {
+                const isActive = pathname === item.path;
+                const Icon = item.icon;
+
+                return (
+                  <button
+                    key={item.name}
+                    onClick={() => router.push(item.path)}
+                    className={`
+                      w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition
+                      ${
+                        isActive
+                          ? "bg-white text-black font-medium"
+                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                      }
+                    `}
+                  >
+                    <Icon size={18} />
+                    {!collapsed && <span>{item.name}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
       </nav>
 
       {/* FOOTER */}
       <div className="p-3 border-t border-gray-800">
 
-        {/* USER INFO */}
         {!collapsed && (
           <div className="flex items-center gap-3 mb-3">
             <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-sm">
@@ -96,7 +125,6 @@ export default function Sidebar() {
           </div>
         )}
 
-        {/* LOGOUT */}
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition"
