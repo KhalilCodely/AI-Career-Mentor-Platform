@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
+import jwt, { type JwtPayload } from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
@@ -25,7 +25,7 @@ export function middleware(req: NextRequest) {
     }
 
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as any;
+      const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload & { role?: string };
 
       if (decoded.role !== "ADMIN") {
         url.pathname = "/dashboard";

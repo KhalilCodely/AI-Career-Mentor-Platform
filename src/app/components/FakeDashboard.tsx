@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 const users = [
   {
@@ -81,8 +82,11 @@ export default function DashboardPreview() {
           >
             {/* User */}
             <div className="flex items-center gap-3">
-              <img
+              <Image
                 src={user.img}
+                alt={`${user.name} avatar`}
+                width={40}
+                height={40}
                 className="w-10 h-10 rounded-full border"
               />
               <span className="font-medium">{user.name}</span>

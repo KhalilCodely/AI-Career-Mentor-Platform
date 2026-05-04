@@ -36,15 +36,17 @@ export default function LoginPage() {
         credentials: "include", // ✅ IMPORTANT for cookies
       });
 
-      const text = await res.text(); // ✅ safe parsing
+      const text = await res.text();
+      const contentType = res.headers.get("content-type") || "";
 
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch {
+      if (!contentType.includes("application/json")) {
         console.error("SERVER RESPONSE (NOT JSON):", text);
-        throw new Error("Server error");
+        throw new Error(
+          "Login API returned HTML instead of JSON. Check server logs and run `npx prisma generate`."
+        );
       }
+
+      const data = JSON.parse(text) as { error?: string; role?: string };
 
       if (!res.ok) {
         throw new Error(data.error || "Login failed");
@@ -57,9 +59,9 @@ export default function LoginPage() {
         router.push("/dashboard");
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("LOGIN ERROR:", err);
-      setError(err.message || "Something went wrong");
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
