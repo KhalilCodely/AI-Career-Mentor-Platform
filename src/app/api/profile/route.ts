@@ -12,10 +12,8 @@ export async function GET() {
     });
 
     return NextResponse.json(profile);
-
   } catch (error) {
-    console.error("GET PROFILE ERROR:", error);
-
+    console.error("PROFILE GET ERROR:", error);
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 401 }
@@ -23,7 +21,8 @@ export async function GET() {
   }
 }
 
-// ✅ CREATE / UPDATE profile
+
+// ✅ UPDATE profile
 export async function POST(req: Request) {
   try {
     const user = await requireUser();
@@ -31,20 +30,29 @@ export async function POST(req: Request) {
 
     const profile = await prisma.profile.upsert({
       where: { userId: user.id },
-      update: body,
+      update: {
+        bio: body.bio,
+        education: body.education,
+        experienceLevel: body.experienceLevel,
+        careerGoal: body.careerGoal,
+        profileImage: body.profileImage,
+      },
       create: {
-        ...body,
         userId: user.id,
+        bio: body.bio,
+        education: body.education,
+        experienceLevel: body.experienceLevel,
+        careerGoal: body.careerGoal,
+        profileImage: body.profileImage,
       },
     });
 
     return NextResponse.json(profile);
-
   } catch (error) {
-    console.error("POST PROFILE ERROR:", error);
+    console.error("PROFILE POST ERROR:", error);
 
     return NextResponse.json(
-      { error: "Server error" },
+      { error: "Failed to update profile" },
       { status: 500 }
     );
   }
