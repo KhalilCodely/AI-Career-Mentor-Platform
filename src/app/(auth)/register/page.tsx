@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -29,7 +30,14 @@ export default function RegisterPage() {
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
-        body: JSON.stringify(form),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email: form.email.trim().toLowerCase(),
+          password: form.password,
+        }),
       });
 
       const data = await res.json();
@@ -62,9 +70,16 @@ export default function RegisterPage() {
           <p className="text-red-500 mb-4 text-sm">{error}</p>
         )}
 
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleRegister();
+          }}
+        >
         <input
           name="name"
           placeholder="Full Name"
+          required
           onChange={handleChange}
           className="w-full mb-3 p-2 border rounded"
         />
@@ -73,6 +88,7 @@ export default function RegisterPage() {
           name="email"
           type="email"
           placeholder="Email"
+          required
           onChange={handleChange}
           className="w-full mb-3 p-2 border rounded"
         />
@@ -81,23 +97,25 @@ export default function RegisterPage() {
           name="password"
           type="password"
           placeholder="Password"
+          required
           onChange={handleChange}
           className="w-full mb-4 p-2 border rounded"
         />
 
         <button
-          onClick={handleRegister}
+          type="submit"
           disabled={loading}
           className="w-full bg-black text-white py-2 rounded"
         >
           {loading ? "Loading..." : "Register"}
         </button>
+        </form>
 
         <p className="text-sm mt-4 text-center">
           Already have an account?{" "}
-          <a href="/login" className="text-blue-600">
+          <Link href="/login" className="text-blue-600">
             Sign in
-          </a>
+          </Link>
         </p>
 
       </div>
