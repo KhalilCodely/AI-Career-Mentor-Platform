@@ -1,6 +1,15 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
+
+type UserProfile = {
+  bio: string;
+  education: string;
+  experienceLevel: string;
+  careerGoal: string;
+  profileImage: string;
+};
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState({
