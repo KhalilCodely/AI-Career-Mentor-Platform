@@ -5,11 +5,19 @@ import { createToken } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    let body;
+
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON" },
+        { status: 400 }
+      );
+    }
 
     const { email, password } = body;
 
-    // ✅ validation
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password required" },
@@ -17,9 +25,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ find user
+    const emailNormalized = email.toLowerCase().trim();
+
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: emailNormalized },
     });
 
     if (!user) {
@@ -29,7 +38,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ compare password
     const valid = await bcrypt.compare(password, user.passwordHash);
 
     if (!valid) {
@@ -39,7 +47,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ create token
     const token = createToken({
       id: user.id,
       role: user.role,
@@ -48,12 +55,16 @@ export async function POST(req: Request) {
     const response = NextResponse.json({
       message: "Login success",
       role: user.role,
+      user: {
+        id: user.id,
+        email: user.email,
+      },
     });
 
-    // ✅ cookie
     response.cookies.set("token", token, {
       httpOnly: true,
-      secure: false, // ⚠️ TEMP FIX (important!)
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
     });
@@ -61,7 +72,7 @@ export async function POST(req: Request) {
     return response;
 
   } catch (error) {
-    console.error("🔥 LOGIN CRASH:", error);
+    console.error("LOGIN ERROR:", error);
 
     return NextResponse.json(
       { error: "Server error" },
