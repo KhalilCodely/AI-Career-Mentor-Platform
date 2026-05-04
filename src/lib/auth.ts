@@ -1,46 +1,58 @@
-import jwt from "jsonwebtoken";
+import "server-only";
 
-type JWTPayload = {
+import jwt from "jsonwebtoken";
+import { cookies } from "next/headers";
+import { prisma } from "./prisma";
+
+const JWT_SECRET = process.env.JWT_SECRET!;
+
+type TokenPayload = {
   userId: string;
   role: "USER" | "ADMIN";
 };
 
-export function requireUser(req: Request) {
-  const middlewareRole = req.headers.get("x-user-role");
-  const middlewareUserId = req.headers.get("x-user-id");
-
-  if (middlewareUserId && middlewareRole) {
-    return {
-      userId: middlewareUserId,
-      role: middlewareRole as "USER" | "ADMIN",
-    };
-  }
-
-  const authHeader = req.headers.get("authorization");
-
-  if (!authHeader) {
-    throw new Error("No authorization header");
-  }
-
-  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-
-  if (!token) {
-    throw new Error("No token provided");
-  }
-
-  if (!process.env.JWT_SECRET) {
-    throw new Error("Server auth configuration is missing");
-  }
-
-  const decoded = jwt.verify(token, process.env.JWT_SECRET) as JWTPayload;
-  return decoded;
+// ✅ Create token
+export function createToken(user: { id: string; role: "USER" | "ADMIN" }) {
+  return jwt.sign(
+    { userId: user.id, role: user.role },
+    JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 }
 
-export function requireAdmin(req: Request) {
-  const user = requireUser(req);
+// ✅ Get current user
+export async function getCurrentUser() {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+
+    if (!token) return null;
+
+    const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
+
+    return await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    });
+  } catch {
+    return null;
+  }
+}
+
+// ✅ Require user
+export async function requireUser() {
+  const user = await getCurrentUser();
+
+  if (!user) throw new Error("UNAUTHORIZED");
+
+  return user;
+}
+
+// ✅ Require admin
+export async function requireAdmin() {
+  const user = await requireUser();
 
   if (user.role !== "ADMIN") {
-    throw new Error("Forbidden - Admins only");
+    throw new Error("FORBIDDEN");
   }
 
   return user;
