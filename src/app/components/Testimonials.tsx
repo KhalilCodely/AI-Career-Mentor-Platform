@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 const reviews = [
   {
@@ -89,8 +90,11 @@ export default function Testimonials() {
           >
             {/* User */}
             <div className="flex items-center gap-4 mb-4">
-              <img
+              <Image
                 src={r.img}
+                alt={`${r.name} avatar`}
+                width={48}
+                height={48}
                 className="w-12 h-12 rounded-full border"
               />
               <div>

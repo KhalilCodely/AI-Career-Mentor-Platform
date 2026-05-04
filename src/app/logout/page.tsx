@@ -9,7 +9,7 @@ export default function LogoutPage() {
   useEffect(() => {
     fetch("/api/auth/logout", { method: "POST" })
       .then(() => router.push("/login"));
-  }, []);
+  }, [router]);
 
   return <p className="p-6">Logging out...</p>;
 }
