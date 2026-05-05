@@ -6,13 +6,10 @@ import { randomUUID } from "crypto";
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
-    const file = formData.get("file") as File;
+    const file = formData.get("file");
 
-    if (!file) {
-      return NextResponse.json(
-        { error: "No file uploaded" },
-        { status: 400 }
-      );
+    if (!(file instanceof File)) {
+      return NextResponse.json({ success: false, error: "No file uploaded" }, { status: 400 });
     }
 
     const bytes = await file.arrayBuffer();
@@ -23,17 +20,9 @@ export async function POST(req: Request) {
 
     await writeFile(filePath, buffer);
 
-    return NextResponse.json({
-      success: true,
-      url: `/uploads/${fileName}`, // ✅ THIS IS IMPORTANT
-    });
-
+    return NextResponse.json({ success: true, data: { url: `/uploads/${fileName}` } });
   } catch (error) {
     console.error("UPLOAD ERROR:", error);
-
-    return NextResponse.json(
-      { error: "Upload failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: "Upload failed" }, { status: 500 });
   }
 }

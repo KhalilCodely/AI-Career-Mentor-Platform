@@ -2,27 +2,19 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 
-// ✅ GET current user's skills
 export async function GET() {
   try {
-    const user = await requireUser();
+    const auth = await requireUser();
+    if (auth.error) return auth.error;
 
     const skills = await prisma.userSkill.findMany({
-      where: { userId: user.id },
-      include: {
-        skill: {
-          include: { category: true },
-        },
-      },
+      where: { userId: auth.userId },
+      include: { skill: { include: { category: true } } },
     });
 
-    return NextResponse.json(skills);
+    return NextResponse.json({ success: true, data: skills });
   } catch (error) {
     console.error("USER SKILLS ERROR:", error);
-
-    return NextResponse.json(
-      { error: "Failed to fetch user skills" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: "Failed to fetch user skills" }, { status: 500 });
   }
 }

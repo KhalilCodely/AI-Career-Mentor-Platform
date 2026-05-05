@@ -3,61 +3,58 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { createToken } from "@/lib/auth";
 
+type LoginBody = {
+  email: string;
+  password: string;
+};
+
+function isLoginBody(value: unknown): value is LoginBody {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "email" in value &&
+    "password" in value &&
+    typeof value.email === "string" &&
+    typeof value.password === "string"
+  );
+}
+
 export async function POST(req: Request) {
   try {
-    let body;
+    const payload: unknown = await req.json().catch(() => null);
 
-    try {
-      body = await req.json();
-    } catch {
+    if (!isLoginBody(payload)) {
       return NextResponse.json(
-        { error: "Invalid JSON" },
+        { success: false, error: "Invalid payload" },
         { status: 400 }
       );
     }
 
-    const { email, password } = body;
+    const emailNormalized = payload.email.toLowerCase().trim();
+    const password = payload.password;
 
-    if (!email || !password) {
+    if (!emailNormalized || !password) {
       return NextResponse.json(
-        { error: "Email and password required" },
+        { success: false, error: "Email and password required" },
         { status: 400 }
       );
     }
 
-    const emailNormalized = email.toLowerCase().trim();
+    const user = await prisma.user.findUnique({ where: { email: emailNormalized } });
 
-    const user = await prisma.user.findUnique({
-      where: { email: emailNormalized },
-    });
-
-    if (!user) {
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       return NextResponse.json(
-        { error: "Invalid credentials" },
+        { success: false, error: "Invalid credentials" },
         { status: 401 }
       );
     }
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
-
-    if (!valid) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
-    }
-
-    const token = createToken({
-      id: user.id,
-      role: user.role,
-    });
-
+    const token = createToken({ id: user.id, role: user.role });
     const response = NextResponse.json({
-      message: "Login success",
-      role: user.role,
-      user: {
-        id: user.id,
-        email: user.email,
+      success: true,
+      data: {
+        role: user.role,
+        user: { id: user.id, email: user.email },
       },
     });
 
@@ -70,12 +67,10 @@ export async function POST(req: Request) {
     });
 
     return response;
-
   } catch (error) {
     console.error("LOGIN ERROR:", error);
-
     return NextResponse.json(
-      { error: "Server error" },
+      { success: false, error: "Server error" },
       { status: 500 }
     );
   }
