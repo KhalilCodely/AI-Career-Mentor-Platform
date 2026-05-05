@@ -5,20 +5,25 @@ import { requireUser } from "@/lib/auth";
 // ✅ GET current user's skills
 export async function GET() {
   try {
-    const user = await requireUser();
+    // Call once only
+    const { userId, error } = await requireUser();
+
+    if (error) return error;
 
     const skills = await prisma.userSkill.findMany({
-      where: { userId: user.id },
+      where: { userId },
       include: {
         skill: {
-          include: { category: true },
+          include: {
+            category: true,
+          },
         },
       },
     });
 
     return NextResponse.json(skills);
-  } catch (error) {
-    console.error("USER SKILLS ERROR:", error);
+  } catch (err) {
+    console.error("USER SKILLS ERROR:", err);
 
     return NextResponse.json(
       { error: "Failed to fetch user skills" },
