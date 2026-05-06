@@ -2,8 +2,19 @@
 
 import { useEffect, useState } from "react";
 
+type Course = {
+  id: string;
+  title: string;
+  provider: string;
+  url: string;
+  icon?: string | null;
+  skill: {
+    name: string;
+  };
+};
+
 export default function CoursesPage() {
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [progressMap, setProgressMap] = useState<{ [key: string]: number }>({});
   const [loading, setLoading] = useState(true);
 
@@ -14,7 +25,7 @@ export default function CoursesPage() {
     const fetchCourses = async () => {
       try {
         const res = await fetch("/api/courses");
-        const data = await res.json();
+        const data = await res.json() as Course[];
         setCourses(data);
       } catch (err) {
         console.error("Failed to load courses", err);

@@ -96,7 +96,6 @@ async function main() {
         title: course.title,
         provider: course.provider,
         url: course.url,
-        icon: course.icon,
         skillId: skillMap[course.skill],
       },
     });
