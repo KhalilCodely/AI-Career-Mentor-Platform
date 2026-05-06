@@ -10,7 +10,7 @@ const links = [
   { name: "Reviews", href: "#reviews" },
 ];
 
-export default function Navbar() {
+export default function NavBar() {
   const [active, setActive] = useState("");
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);

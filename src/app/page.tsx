@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import Navbar from "./Landing Page/Navbar";
+import NavBar from "./Landing Page/NavBar";
 import Hero from "./Landing Page/Hero";
 
 const Features = dynamic(() => import("./Landing Page/Features"), {
@@ -29,7 +29,7 @@ function SectionPlaceholder({ title }: { title: string }) {
 export default function Home() {
   return (
     <main className="pt-20">
-      <Navbar />
+      <NavBar />
       <Hero />
       <Features />
       <AiDemoChat />
