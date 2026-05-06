@@ -1,229 +1,154 @@
 # API Routes Documentation
 
-This document outlines all registered API routes in the Tech Talks Career Mentor application. Routes are automatically registered using Next.js App Router based on file structure.
+This document outlines the registered API routes in the Tech Talks Career Mentor application. Routes are registered by the Next.js App Router from `src/app/api`.
+
+## Versioned API Base
+
+All active application API routes are grouped under:
+
+```txt
+/api/v1
+```
 
 ## Authentication Routes
 
-### POST `/api/login`
-**Purpose**: User login  
-**Body**: `{ email: string, password: string }`  
-**Response**: `{ message: string, token: string, user: { id, name, email } }`  
-**Status**: 200 | 400 | 401 | 500
+### POST `/api/v1/auth/register`
+**Purpose**: Register a new user and create an empty profile.
+**Body**: `{ name: string, email: string, password: string }`
+**Response**: `{ message: string, userId: string }`
+**Status**: `201 | 400 | 409 | 500`
 
-### POST `/api/signup`
-**Purpose**: User registration  
-**Body**: `{ name: string, email: string, password: string }`  
-**Response**: `{ message: string, user: { id, name, email } }`  
-**Status**: 201 | 400 | 500
+### POST `/api/v1/auth/login`
+**Purpose**: Log in a user and set an HTTP-only auth cookie.
+**Body**: `{ email: string, password: string }`
+**Response**: `{ message: string, role: string, user: { id: string, email: string } }`
+**Status**: `200 | 400 | 401 | 500`
 
-
-### POST `/api/auth/forgot-password`
-**Purpose**: Start password reset flow
-**Body**: `{ email: string }`
-**Response**: `{ message: string, resetLink?: string }`
-**Status**: 200 | 400 | 500
-
-### POST `/api/auth/reset-password`
-**Purpose**: Complete password reset
-**Body**: `{ token: string, password: string }`
+### POST `/api/v1/auth/logout`
+**Purpose**: Clear the auth cookie.
 **Response**: `{ message: string }`
-**Status**: 200 | 400 | 500
-
-### GET `/api/admin/dashboard`
-**Purpose**: Admin dashboard metrics and recent users
-**Auth**: Requires admin bearer token
-**Response**: `{ success: boolean, data: { totals, recentUsers } }`
-**Status**: 200 | 401 | 403 | 500
-
-## Career Path Routes
-
-### GET `/api/career_path`
-**Purpose**: Get all career paths or user's enrolled paths  
-**Query**: `?userId=<userId>` (optional)  
-**Response**: `{ success: boolean, data: CareerPath[], count: number }`  
-**Status**: 200 | 500
-
-### POST `/api/career_path`
-**Purpose**: Create a new career path (Admin only)  
-**Body**: `{ title: string, description?: string }`  
-**Auth**: Requires admin token  
-**Response**: `{ success: boolean, data: CareerPath, message: string }`  
-**Status**: 201 | 400 | 401 | 403 | 409 | 500
-
-### GET `/api/career_path/:id`
-**Purpose**: Get a single career path with enrolled users  
-**Params**: `id: string (UUID)`  
-**Response**: `{ success: boolean, data: CareerPath }`  
-**Status**: 200 | 400 | 404 | 500
-
-### PUT `/api/career_path/:id`
-**Purpose**: Update a career path (Admin only)  
-**Params**: `id: string (UUID)`  
-**Body**: `{ title?: string, description?: string }`  
-**Auth**: Requires admin token  
-**Response**: `{ success: boolean, data: CareerPath, message: string }`  
-**Status**: 200 | 400 | 401 | 403 | 404 | 409 | 500
-
-### DELETE `/api/career_path/:id`
-**Purpose**: Delete a career path (Admin only)  
-**Params**: `id: string (UUID)`  
-**Auth**: Requires admin token  
-**Response**: `{ success: boolean, message: string }`  
-**Status**: 200 | 400 | 401 | 403 | 404 | 500
-
-## Career Path Enrollment Routes
-
-### POST `/api/career_path/enroll`
-**Purpose**: Enroll a user in a career path  
-**Body**: `{ userId: string, careerPathId: string }`  
-**Response**: `{ success: boolean, data: UserCareerPath, message: string }`  
-**Status**: 201 | 400 | 404 | 409 | 500
-
-### PATCH `/api/career_path/progress`
-**Purpose**: Update user's progress in a career path  
-**Body**: `{ userId: string, careerPathId: string, progress: number (0-100) }`  
-**Response**: `{ success: boolean, data: UserCareerPath, message: string }`  
-**Status**: 200 | 400 | 404 | 500
-
-### DELETE `/api/career_path/unenroll`
-**Purpose**: Unenroll a user from a career path  
-**Body**: `{ userId: string, careerPathId: string }`  
-**Response**: `{ success: boolean, message: string }`  
-**Status**: 200 | 400 | 404 | 500
-
-## Skills Routes
-
-### GET `/api/skills`
-**Purpose**: Get all skills or filter by category  
-**Query**: `?category=<category>` (optional)  
-**Response**: `{ success: boolean, data: Skill[], count: number }`  
-**Status**: 200 | 500
-
-### POST `/api/skills`
-**Purpose**: Create a new skill (Admin only)  
-**Body**: `{ name: string, category?: string }`  
-**Auth**: Requires admin token  
-**Response**: `{ success: boolean, data: Skill, message: string }`  
-**Status**: 201 | 400 | 401 | 403 | 409 | 500
-
-### GET `/api/skills/:id`
-**Purpose**: Get a single skill by ID  
-**Params**: `id: string (UUID)`  
-**Response**: `{ success: boolean, data: Skill }`  
-**Status**: 200 | 400 | 404 | 500
-
-### PUT `/api/skills/:id`
-**Purpose**: Update a skill (Admin only)  
-**Params**: `id: string (UUID)`  
-**Body**: `{ name?: string, category?: string }`  
-**Auth**: Requires admin token  
-**Response**: `{ success: boolean, data: Skill, message: string }`  
-**Status**: 200 | 400 | 401 | 403 | 404 | 409 | 500
-
-## Courses Routes
-
-### GET `/api/courses`
-**Purpose**: Get all courses with their skill/category details and optional user progress  
-**Query**: `?userId=<userId>&skill=<skill>&provider=<provider>` (optional)  
-**Response**: `{ success: boolean, data: Course[], count: number }`  
-**Status**: 200 | 500
-
+**Status**: `200`
 
 ## Profile Routes
 
-### GET `/api/profile`
-**Purpose**: Get the authenticated user's profile
-**Auth**: Requires bearer token
-**Response**: `{ success: boolean, data: Profile | null }`
-**Status**: 200 | 401 | 500
+### GET `/api/v1/profile`
+**Purpose**: Get the authenticated user's profile.
+**Auth**: Requires auth cookie.
+**Response**: `{ success: true, data: Profile }`
+**Status**: `200 | 401 | 404 | 500`
 
-### PUT `/api/profile`
-**Purpose**: Create or update the authenticated user's profile
-**Auth**: Requires bearer token
-**Body**: `{ bio?: string, education?: string, experienceLevel?: string, careerGoal?: string }`
-**Response**: `{ success: boolean, data: Profile, message: string }`
-**Status**: 200 | 400 | 401 | 500
+### POST `/api/v1/profile`
+**Purpose**: Create or update the authenticated user's profile.
+**Auth**: Requires auth cookie.
+**Body**: `{ bio?: string, education?: string, experienceLevel?: string, careerGoal?: string, profileImage?: string }`
+**Response**: `{ success: true, data: Profile, message: string }`
+**Status**: `200 | 400 | 401 | 404 | 500`
 
-## User Progress Routes
+### POST `/api/v1/profile/upload`
+**Purpose**: Upload a profile image to `public/uploads`.
+**Body**: `multipart/form-data` with a `file` field.
+**Response**: `{ url: string }`
+**Status**: `200 | 400 | 500`
 
-### GET `/api/user_progress`
-**Purpose**: Get the authenticated user's course progress records  
-**Auth**: Requires bearer token  
-**Query**: `?courseId=<courseId>` (optional)  
-**Response**: `{ success: boolean, data: UserProgress[], count: number }`  
-**Status**: 200 | 401 | 500
+## Skills Routes
 
-### POST `/api/user_progress`
-**Purpose**: Create or update the authenticated user's course progress  
-**Auth**: Requires bearer token  
-**Body**: `{ courseId: string, progress: number (0-100), completed?: boolean }`  
-**Response**: `{ success: boolean, data: UserProgress, message: string }`  
-**Status**: 200 | 400 | 401 | 404 | 500
+### GET `/api/v1/skills`
+**Purpose**: List available skills with their categories.
+**Response**: `Skill[]`
+**Status**: `200 | 500`
 
-## Protected Routes
+### GET `/api/v1/skills/user`
+**Purpose**: List selected skill IDs for the authenticated user.
+**Auth**: Requires auth cookie.
+**Response**: `{ skillId: string }[]`
+**Status**: `200 | 401 | 500`
 
-### GET `/api/protected/test`
-**Purpose**: Test endpoint for authenticated users  
-**Response**: `{ message: string }`  
-**Status**: 200
+### GET `/api/v1/skills/user?expand=skill`
+**Purpose**: List selected user skills with full skill and category records.
+**Auth**: Requires auth cookie.
+**Response**: `UserSkill[]`
+**Status**: `200 | 401 | 500`
 
-### GET `/api/protected/test/admin`
-**Purpose**: Test endpoint for admin users  
-**Auth**: Requires admin token  
-**Response**: `{ message: string, admin: JWTPayload }`  
-**Status**: 200 | 401 | 403
+### POST `/api/v1/skills/user`
+**Purpose**: Replace the authenticated user's selected skills.
+**Auth**: Requires auth cookie.
+**Body**: `{ skillIds: string[] }`
+**Response**: `{ message: string }`
+**Status**: `200 | 400 | 401 | 500`
 
-### GET `/api/protected/test/user`
-**Purpose**: Test endpoint for regular users  
-**Response**: `{ message: string }`  
-**Status**: 200
+## Planned API Domains
 
-## Authentication
+The following versioned API folders are reserved for the next feature areas:
 
-### Bearer Token
-For admin-protected routes, include the JWT token in the Authorization header:
-```
-Authorization: Bearer <jwt_token>
-```
-
-### Middleware Headers
-The system also supports middleware headers:
-```
-x-user-role: ADMIN | USER
-x-user-id: <userId>
-```
+- `/api/v1/career`
+- `/api/v1/courses`
+- `/api/v1/ai`
+- `/api/v1/resume`
 
 ## File Structure
 
-All routes are automatically registered through Next.js App Router:
+```txt
+src/
+├── app/
+│   ├── (auth)/
+│   ├── dashboard/
+│   └── api/
+│       └── v1/
+│           ├── auth/
+│           │   ├── login/route.ts
+│           │   ├── logout/route.ts
+│           │   └── register/route.ts
+│           ├── profile/
+│           │   ├── route.ts
+│           │   └── upload/route.ts
+│           ├── skills/
+│           │   ├── route.ts
+│           │   └── user/route.ts
+│           ├── career/
+│           ├── courses/
+│           ├── ai/
+│           └── resume/
+├── modules/
+│   ├── auth/
+│   ├── user/
+│   ├── skill/
+│   ├── career/
+│   ├── course/
+│   ├── ai/
+│   └── resume/
+├── services/
+│   ├── ai.service.ts
+│   └── upload.service.ts
+├── lib/
+│   ├── prisma.ts
+│   └── auth.ts
+├── validations/
+│   ├── auth.schema.ts
+│   ├── skill.schema.ts
+│   └── profile.schema.ts
+├── types/
+└── utils/
+```
 
-```
-src/app/api/
-├── career_path/
-│   ├── route.ts                 (GET all, POST create)
-│   ├── [id]/route.ts            (GET single, PUT update, DELETE)
-│   ├── enroll/route.ts          (POST enroll)
-│   ├── progress/route.ts        (PATCH progress)
-│   └── unenroll/route.ts        (DELETE unenroll)
-├── skills/
-│   ├── route.ts                 (GET all, POST create)
-│   └── [id]/route.ts            (GET single, PUT update)
-├── courses/
-│   └── route.ts                 (GET all)
-├── login/route.ts               (POST login)
-├── signup/route.ts              (POST signup)
-├── profile/route.ts             (GET/PUT profile)
-├── user_progress/route.ts       (GET/POST user progress)
-└── protected/
-    └── test/
-        ├── route.ts             (GET test)
-        ├── admin/route.ts       (GET admin test)
-        └── user/route.ts        (GET user test)
-```
+## Layering Rules
+
+- `src/app/api/v1/**/route.ts` files should stay thin and handle HTTP concerns only.
+- `src/modules/**` owns business logic and database orchestration.
+- `src/services/**` owns reusable provider and infrastructure integrations.
+- `src/validations/**` owns Zod request schemas.
+- `src/lib/**` owns app-wide library helpers such as Prisma and authentication.
 
 ## Error Responses
 
-All routes follow a consistent error response format:
+Most errors follow this format:
+
+```json
+{
+  "error": "Error message"
+}
+```
+
+Profile errors include a success flag:
 
 ```json
 {
@@ -231,11 +156,3 @@ All routes follow a consistent error response format:
   "error": "Error message"
 }
 ```
-
-Common error codes:
-- `400`: Bad Request - Invalid input
-- `401`: Unauthorized - Missing or invalid token
-- `403`: Forbidden - Insufficient permissions
-- `404`: Not Found - Resource doesn't exist
-- `409`: Conflict - Duplicate resource
-- `500`: Internal Server Error - Server-side error

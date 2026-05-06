@@ -3,8 +3,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 
+type Skill = {
+  id: string;
+  name: string;
+  category?: {
+    name?: string | null;
+  } | null;
+};
+
+type UserSkillSelection = {
+  skillId: string;
+};
+
 export default function SkillsPage() {
-  const [skills, setSkills] = useState<any[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -14,18 +26,16 @@ export default function SkillsPage() {
     const loadData = async () => {
       try {
         const [skillsRes, userSkillsRes] = await Promise.all([
-          fetch("/api/skills"),
-          fetch("/api/user-skills", { credentials: "include" }),
+          fetch("/api/v1/skills"),
+          fetch("/api/v1/skills/user", { credentials: "include" }),
         ]);
 
-        const skillsData = await skillsRes.json();
-        const userSkillsData = await userSkillsRes.json();
+        const skillsData = (await skillsRes.json()) as Skill[];
+        const userSkillsData = (await userSkillsRes.json()) as UserSkillSelection[];
 
         setSkills(skillsData);
 
-        const selectedIds = userSkillsData.map(
-          (s: any) => s.skillId
-        );
+        const selectedIds = userSkillsData.map((s) => s.skillId);
 
         setSelected(selectedIds);
       } catch (err) {
@@ -39,7 +49,7 @@ export default function SkillsPage() {
   }, []);
 
   const grouped = useMemo(() => {
-    const map: Record<string, any[]> = {};
+    const map: Record<string, Skill[]> = {};
 
     skills.forEach((skill) => {
       const category = skill.category?.name || "Other";
@@ -78,7 +88,7 @@ export default function SkillsPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/user-skills", {
+      const res = await fetch("/api/v1/skills/user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -91,9 +101,9 @@ export default function SkillsPage() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      alert(err.message);
+      alert(err instanceof Error ? err.message : "Failed to save skills");
     } finally {
       setLoading(false);
     }

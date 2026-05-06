@@ -7,7 +7,7 @@ export default function LogoutPage() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch("/api/auth/logout", { method: "POST" })
+    fetch("/api/v1/auth/logout", { method: "POST" })
       .then(() => router.push("/login"));
   }, [router]);
 

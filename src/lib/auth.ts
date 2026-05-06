@@ -4,7 +4,12 @@ import { NextResponse } from "next/server";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
-export function createToken(payload: any) {
+type TokenPayload = {
+  id: string;
+  role?: string;
+};
+
+export function createToken(payload: TokenPayload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
 }
 
@@ -15,7 +20,7 @@ export async function getUserIdFromToken() {
   if (!token) return null;
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
     return decoded.id;
   } catch {
     return null;

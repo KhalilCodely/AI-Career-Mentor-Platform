@@ -12,7 +12,7 @@ type UserProfile = {
 };
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState({
+  const [profile, setProfile] = useState<UserProfile>({
     bio: "",
     education: "",
     experienceLevel: "",
@@ -29,7 +29,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("/api/profile", {
+        const res = await fetch("/api/v1/profile", {
           credentials: "include",
         });
 
@@ -63,16 +63,16 @@ export default function ProfilePage() {
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch("/api/upload", {
+  const res = await fetch("/api/v1/profile/upload", {
     method: "POST",
     body: formData,
   });
 
   const text = await res.text();
 
-  let data;
+  let data: { url?: string; error?: string };
   try {
-    data = JSON.parse(text);
+    data = JSON.parse(text) as { url?: string; error?: string };
   } catch {
     console.error("UPLOAD NON-JSON:", text);
     throw new Error("Upload server error");
@@ -99,7 +99,7 @@ export default function ProfilePage() {
       imageUrl = await uploadImage();
     }
 
-    const res = await fetch("/api/profile", {
+    const res = await fetch("/api/v1/profile", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -125,9 +125,9 @@ export default function ProfilePage() {
 
     setSuccess("Profile updated successfully ✅");
 
-  } catch (err: any) {
+  } catch (err) {
     console.error(err);
-    setSuccess(err.message || "❌ Failed to save profile");
+    setSuccess(err instanceof Error ? err.message : "❌ Failed to save profile");
   } finally {
     setLoading(false);
   }
@@ -151,13 +151,21 @@ export default function ProfilePage() {
         <div className="flex items-center gap-6">
           <div className="w-24 h-24 rounded-full overflow-hidden border">
             {file ? (
-              <img
+              <Image
                 src={URL.createObjectURL(file)}
+                alt="Selected profile preview"
+                width={96}
+                height={96}
+                unoptimized
                 className="w-full h-full object-cover"
               />
             ) : profile.profileImage ? (
-              <img
+              <Image
                 src={profile.profileImage}
+                alt="Profile avatar"
+                width={96}
+                height={96}
+                unoptimized
                 className="w-full h-full object-cover"
               />
             ) : (
