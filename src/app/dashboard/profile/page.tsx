@@ -11,8 +11,17 @@ type UserProfile = {
   profileImage: string;
 };
 
+type ProfileResponse = {
+  data?: UserProfile;
+  error?: string;
+};
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "❌ Failed to save profile";
+}
+
 export default function ProfilePage() {
-  const [profile, setProfile] = useState({
+  const [profile, setProfile] = useState<UserProfile>({
     bio: "",
     education: "",
     experienceLevel: "",
@@ -21,6 +30,7 @@ export default function ProfilePage() {
   });
 
   const [file, setFile] = useState<File | null>(null);
+  const [filePreviewUrl, setFilePreviewUrl] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [success, setSuccess] = useState("");
@@ -33,7 +43,7 @@ export default function ProfilePage() {
           credentials: "include",
         });
 
-        const data = await res.json();
+        const data = await res.json() as ProfileResponse;
 
         if (data?.data) {
           setProfile(data.data);
@@ -47,6 +57,19 @@ export default function ProfilePage() {
 
     load();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (filePreviewUrl) {
+        URL.revokeObjectURL(filePreviewUrl);
+      }
+    };
+  }, [filePreviewUrl]);
+
+  const handleFileChange = (selectedFile: File | null) => {
+    setFile(selectedFile);
+    setFilePreviewUrl(selectedFile ? URL.createObjectURL(selectedFile) : "");
+  };
 
  const uploadImage = async () => {
   if (!file) return profile.profileImage;
@@ -111,7 +134,7 @@ export default function ProfilePage() {
       }),
     });
 
-    const data = await res.json();
+    const data = await res.json() as ProfileResponse;
 
     if (!res.ok) throw new Error(data.error);
 
@@ -125,9 +148,9 @@ export default function ProfilePage() {
 
     setSuccess("Profile updated successfully ✅");
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(err);
-    setSuccess(err.message || "❌ Failed to save profile");
+    setSuccess(getErrorMessage(err));
   } finally {
     setLoading(false);
   }
@@ -149,16 +172,15 @@ export default function ProfilePage() {
 
         {/* Avatar */}
         <div className="flex items-center gap-6">
-          <div className="w-24 h-24 rounded-full overflow-hidden border">
-            {file ? (
-              <img
-                src={URL.createObjectURL(file)}
-                className="w-full h-full object-cover"
-              />
-            ) : profile.profileImage ? (
-              <img
-                src={profile.profileImage}
-                className="w-full h-full object-cover"
+          <div className="relative w-24 h-24 rounded-full overflow-hidden border">
+            {filePreviewUrl || profile.profileImage ? (
+              <Image
+                src={filePreviewUrl || profile.profileImage}
+                alt="Profile preview"
+                fill
+                sizes="96px"
+                className="object-cover"
+                unoptimized
               />
             ) : (
               <div className="flex items-center justify-center h-full text-gray-400 text-sm">
@@ -171,7 +193,7 @@ export default function ProfilePage() {
             <input
               type="file"
               onChange={(e) =>
-                setFile(e.target.files?.[0] || null)
+                handleFileChange(e.target.files?.[0] || null)
               }
               className="text-sm"
             />

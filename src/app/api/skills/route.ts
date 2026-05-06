@@ -2,6 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET() {
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json([]);
+  }
+
   try {
     const skills = await prisma.skill.findMany({
       include: {

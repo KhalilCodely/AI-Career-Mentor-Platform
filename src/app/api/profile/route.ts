@@ -2,10 +2,34 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 
+type ProfileUser = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+type ProfileRecord = {
+  bio: string | null;
+  education: string | null;
+  experienceLevel: string | null;
+  careerGoal: string | null;
+  profileImage: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+} | null;
+
+type ProfilePayload = {
+  bio?: string;
+  education?: string;
+  experienceLevel?: string;
+  careerGoal?: string;
+  profileImage?: string;
+};
+
 /////////////////////////
 // SHARED FORMATTER
 /////////////////////////
-function formatProfile(user: any, profile: any) {
+function formatProfile(user: ProfileUser, profile: ProfileRecord) {
   return {
     id: user.id,
     name: user.name,
@@ -70,7 +94,7 @@ export async function POST(req: Request) {
     const { userId, error } = await requireUser();
     if (error) return error;
 
-    const body = await req.json();
+    const body = await req.json() as ProfilePayload;
 
     const {
       bio = "",
@@ -112,6 +136,13 @@ export async function POST(req: Request) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
+    }
 
     const formatted = formatProfile(user, profile);
 

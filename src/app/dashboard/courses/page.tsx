@@ -2,22 +2,77 @@
 
 import { useEffect, useState } from "react";
 
-export default function CoursesPage() {
-  const [courses, setCourses] = useState<any[]>([]);
-  const [progressMap, setProgressMap] = useState<{ [key: string]: number }>({});
-  const [loading, setLoading] = useState(true);
+type Course = {
+  id: string;
+  title: string;
+  provider: string;
+  url: string;
+  icon?: string | null;
+  skill: {
+    name: string;
+  };
+};
 
-  // 🔐 replace with your session later
-  const userId = "REPLACE_WITH_SESSION";
+type ProgressRecord = {
+  courseId: string;
+  progress: number;
+  completed: boolean;
+};
+
+type ProgressResponse = {
+  success?: boolean;
+  data?: ProgressRecord[];
+  error?: string;
+};
+
+type ApiErrorResponse = {
+  error?: string;
+};
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Progress update failed";
+}
+
+export default function CoursesPage() {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [progressMap, setProgressMap] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const res = await fetch("/api/courses");
-        const data = await res.json();
-        setCourses(data);
+        const [coursesRes, progressRes] = await Promise.all([
+          fetch("/api/courses"),
+          fetch("/api/progress", { credentials: "include" }),
+        ]);
+
+        const coursesData = await coursesRes.json() as Course[] | ApiErrorResponse;
+
+        if (!coursesRes.ok || !Array.isArray(coursesData)) {
+          throw new Error(
+            Array.isArray(coursesData) ? "Failed to load courses" : coursesData.error || "Failed to load courses"
+          );
+        }
+
+        setCourses(coursesData);
+
+        if (progressRes.status !== 401) {
+          const progressData = await progressRes.json() as ProgressResponse;
+
+          if (!progressRes.ok) {
+            throw new Error(progressData.error || "Failed to load progress");
+          }
+
+          const savedProgress = Object.fromEntries(
+            (progressData.data || []).map((record) => [record.courseId, record.progress])
+          );
+
+          setProgressMap(savedProgress);
+        }
       } catch (err) {
         console.error("Failed to load courses", err);
+        setError(getErrorMessage(err));
       } finally {
         setLoading(false);
       }
@@ -27,26 +82,40 @@ export default function CoursesPage() {
   }, []);
 
   const updateProgress = async (courseId: string, value: number) => {
+    const previousProgress = progressMap[courseId] || 0;
+
     // ✅ instant UI update
     setProgressMap((prev) => ({
       ...prev,
       [courseId]: value,
     }));
+    setError("");
 
     try {
-      await fetch("/api/progress", {
+      const res = await fetch("/api/progress", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
-          userId,
           courseId,
           progress: value,
         }),
       });
+
+      const data = await res.json() as { error?: string };
+
+      if (!res.ok) {
+        throw new Error(data.error || "Progress update failed");
+      }
     } catch (err) {
       console.error("Progress update failed", err);
+      setProgressMap((prev) => ({
+        ...prev,
+        [courseId]: previousProgress,
+      }));
+      setError(getErrorMessage(err));
     }
   };
 
@@ -59,6 +128,12 @@ export default function CoursesPage() {
     <div className="p-4 md:p-6">
       {/* HEADER */}
       <h1 className="text-2xl font-bold mb-6">🎓 Courses</h1>
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       {/* GRID */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

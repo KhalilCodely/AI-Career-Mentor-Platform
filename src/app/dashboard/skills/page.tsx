@@ -3,12 +3,33 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 
+type Skill = {
+  id: string;
+  name: string;
+  category?: {
+    name: string;
+  } | null;
+};
+
+type UserSkillSelection = {
+  skillId: string;
+};
+
+type ApiErrorResponse = {
+  error?: string;
+};
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Something went wrong";
+}
+
 export default function SkillsPage() {
-  const [skills, setSkills] = useState<any[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const loadData = async () => {
@@ -18,18 +39,36 @@ export default function SkillsPage() {
           fetch("/api/user-skills", { credentials: "include" }),
         ]);
 
-        const skillsData = await skillsRes.json();
-        const userSkillsData = await userSkillsRes.json();
+        const skillsData = await skillsRes.json() as Skill[] | ApiErrorResponse;
+
+        if (!skillsRes.ok || !Array.isArray(skillsData)) {
+          throw new Error(
+            Array.isArray(skillsData) ? "Failed to load skills" : skillsData.error || "Failed to load skills"
+          );
+        }
 
         setSkills(skillsData);
 
-        const selectedIds = userSkillsData.map(
-          (s: any) => s.skillId
-        );
+        if (userSkillsRes.status !== 401) {
+          const userSkillsData = await userSkillsRes.json() as UserSkillSelection[] | ApiErrorResponse;
 
-        setSelected(selectedIds);
-      } catch (err) {
+          if (!userSkillsRes.ok || !Array.isArray(userSkillsData)) {
+            throw new Error(
+              Array.isArray(userSkillsData)
+                ? "Failed to load selected skills"
+                : userSkillsData.error || "Failed to load selected skills"
+            );
+          }
+
+          const selectedIds = userSkillsData.map(
+            (s) => s.skillId
+          );
+
+          setSelected(selectedIds);
+        }
+      } catch (err: unknown) {
         console.error(err);
+        setError(getErrorMessage(err));
       } finally {
         setInitialLoading(false);
       }
@@ -39,7 +78,7 @@ export default function SkillsPage() {
   }, []);
 
   const grouped = useMemo(() => {
-    const map: Record<string, any[]> = {};
+    const map: Record<string, Skill[]> = {};
 
     skills.forEach((skill) => {
       const category = skill.category?.name || "Other";
@@ -91,9 +130,9 @@ export default function SkillsPage() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      alert(err.message);
+      alert(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -146,6 +185,12 @@ export default function SkillsPage() {
 
       {/* 🔥 SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6">
+
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
 
         <div className="mb-4 text-sm text-gray-500">
           {selected.length} skills selected

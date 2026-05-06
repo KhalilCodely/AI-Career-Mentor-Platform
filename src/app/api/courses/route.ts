@@ -2,11 +2,24 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const courses = await prisma.course.findMany({
-    include: {
-      skill: true,
-    },
-  });
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json([]);
+  }
 
-  return NextResponse.json(courses);
+  try {
+    const courses = await prisma.course.findMany({
+      include: {
+        skill: true,
+      },
+    });
+
+    return NextResponse.json(courses);
+  } catch (error) {
+    console.error("GET COURSES ERROR:", error);
+
+    return NextResponse.json(
+      { error: "Failed to fetch courses" },
+      { status: 500 }
+    );
+  }
 }
