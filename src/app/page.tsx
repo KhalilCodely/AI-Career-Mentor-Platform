@@ -1,20 +1,20 @@
 import dynamic from "next/dynamic";
-import Navbar from "./components/NavBar";
-import Hero from "./components/Hero";
+import Navbar from "./Landing Page/Navbar";
+import Hero from "./Landing Page/Hero";
 
-const Features = dynamic(() => import("./components/Features"), {
+const Features = dynamic(() => import("./Landing Page/Features"), {
   loading: () => <SectionPlaceholder title="Loading features..." />,
 });
-const AiDemoChat = dynamic(() => import("./components/AiDemoChat"), {
+const AiDemoChat = dynamic(() => import("./Landing Page/AiDemoChat"), {
   loading: () => <SectionPlaceholder title="Loading AI demo..." />,
 });
-const FakeDashboard = dynamic(() => import("./components/FakeDashboard"), {
+const FakeDashboard = dynamic(() => import("./Landing Page/FakeDashboard"), {
   loading: () => <SectionPlaceholder title="Loading dashboard..." />,
 });
-const Testimonials = dynamic(() => import("./components/Testimonials"), {
+const Testimonials = dynamic(() => import("./Landing Page/Testimonials"), {
   loading: () => <SectionPlaceholder title="Loading reviews..." />,
 });
-const Footer = dynamic(() => import("./components/Footer"));
+const Footer = dynamic(() => import("./Landing Page/Footer"));
 
 function SectionPlaceholder({ title }: { title: string }) {
   return (
