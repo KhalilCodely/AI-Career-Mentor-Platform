@@ -145,7 +145,7 @@ export default function NavBar() {
             ))}
 
             <Link
-              href="/signup"
+              href="/register"
               className="mt-1 inline-block rounded-lg bg-zinc-900 px-4 py-2 text-center text-sm text-white dark:bg-white dark:text-zinc-900"
             >
               Get Started
