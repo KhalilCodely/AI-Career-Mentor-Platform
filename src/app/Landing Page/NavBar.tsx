@@ -10,7 +10,7 @@ const links = [
   { name: "Reviews", href: "#reviews" },
 ];
 
-export default function Navbar() {
+export default function NavBar() {
   const [active, setActive] = useState("");
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -145,7 +145,7 @@ export default function Navbar() {
             ))}
 
             <Link
-              href="/signup"
+              href="/register"
               className="mt-1 inline-block rounded-lg bg-zinc-900 px-4 py-2 text-center text-sm text-white dark:bg-white dark:text-zinc-900"
             >
               Get Started

@@ -21,7 +21,7 @@ export default function Hero() {
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <a
-            href="/signup"
+            href="/register"
             className="rounded-xl bg-zinc-900 px-6 py-3 text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl dark:bg-white dark:text-zinc-900"
           >
             Start Free
