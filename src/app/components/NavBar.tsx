@@ -45,10 +45,8 @@ export default function Navbar() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
 
-        {/* 🔥 LOGO */}
         <Link href="/" className="flex items-center gap-3 group">
 
-  {/* 🔥 Advanced Logo Icon */}
   <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 shadow-lg transition group-hover:scale-105">
 
     {/* Glow ring */}
@@ -74,7 +72,6 @@ export default function Navbar() {
     </svg>
   </div>
 
-  {/* 🔥 Brand Text */}
   <div className="flex flex-col leading-tight">
 
     {/* Main brand */}

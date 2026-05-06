@@ -47,7 +47,6 @@ export default function RegisterPage() {
         return;
       }
 
-      // ✅ after register → login page
       router.push("/login");
 
     } catch {

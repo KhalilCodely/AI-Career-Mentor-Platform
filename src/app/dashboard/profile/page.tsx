@@ -3,14 +3,6 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-type UserProfile = {
-  bio: string;
-  education: string;
-  experienceLevel: string;
-  careerGoal: string;
-  profileImage: string;
-};
-
 export default function ProfilePage() {
   const [profile, setProfile] = useState({
     bio: "",
@@ -25,7 +17,6 @@ export default function ProfilePage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [success, setSuccess] = useState("");
 
-  // ✅ load profile
   useEffect(() => {
     const load = async () => {
       try {
@@ -51,7 +42,6 @@ export default function ProfilePage() {
  const uploadImage = async () => {
   if (!file) return profile.profileImage;
 
-  // ✅ validation
   if (!file.type.startsWith("image/")) {
     throw new Error("Invalid file type");
   }
@@ -70,9 +60,9 @@ export default function ProfilePage() {
 
   const text = await res.text();
 
-  let data;
+  let data: { url?: string; error?: string };
   try {
-    data = JSON.parse(text);
+    data = JSON.parse(text) as { url?: string; error?: string };
   } catch {
     console.error("UPLOAD NON-JSON:", text);
     throw new Error("Upload server error");
@@ -81,8 +71,6 @@ export default function ProfilePage() {
   if (!res.ok || !data?.url) {
     throw new Error(data?.error || "Upload failed");
   }
-
-  console.log("UPLOAD SUCCESS:", data.url);
 
   return data.url;
 };
@@ -94,7 +82,6 @@ export default function ProfilePage() {
   try {
     let imageUrl = profile.profileImage;
 
-    // ✅ only overwrite if upload succeeds
     if (file) {
       imageUrl = await uploadImage();
     }
@@ -115,7 +102,6 @@ export default function ProfilePage() {
 
     if (!res.ok) throw new Error(data.error);
 
-    // ✅ update UI immediately
     setProfile((prev) => ({
       ...prev,
       profileImage: imageUrl,
@@ -123,11 +109,11 @@ export default function ProfilePage() {
 
     setFile(null);
 
-    setSuccess("Profile updated successfully ✅");
+    setSuccess("Profile updated successfully");
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(err);
-    setSuccess(err.message || "❌ Failed to save profile");
+    setSuccess(err instanceof Error ? err.message : "Failed to save profile");
   } finally {
     setLoading(false);
   }
@@ -147,18 +133,23 @@ export default function ProfilePage() {
 
       <div className="bg-white rounded-2xl shadow p-6 space-y-6">
 
-        {/* Avatar */}
         <div className="flex items-center gap-6">
-          <div className="w-24 h-24 rounded-full overflow-hidden border">
+          <div className="relative w-24 h-24 rounded-full overflow-hidden border">
             {file ? (
-              <img
+              <Image
                 src={URL.createObjectURL(file)}
-                className="w-full h-full object-cover"
+                alt="Selected profile preview"
+                fill
+                unoptimized
+                className="object-cover"
               />
             ) : profile.profileImage ? (
-              <img
+              <Image
                 src={profile.profileImage}
-                className="w-full h-full object-cover"
+                alt="Profile image"
+                fill
+                unoptimized
+                className="object-cover"
               />
             ) : (
               <div className="flex items-center justify-center h-full text-gray-400 text-sm">
@@ -181,7 +172,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Bio */}
         <div>
           <label className="block text-sm font-medium mb-1">
             Bio
@@ -196,7 +186,6 @@ export default function ProfilePage() {
           />
         </div>
 
-        {/* Education */}
         <div>
           <label className="block text-sm font-medium mb-1">
             Education
@@ -213,7 +202,6 @@ export default function ProfilePage() {
           />
         </div>
 
-        {/* Experience Level */}
         <div>
           <label className="block text-sm font-medium mb-1">
             Experience Level
@@ -235,7 +223,6 @@ export default function ProfilePage() {
           </select>
         </div>
 
-        {/* Career Goal */}
         <div>
           <label className="block text-sm font-medium mb-1">
             Career Goal
@@ -252,14 +239,12 @@ export default function ProfilePage() {
           />
         </div>
 
-        {/* Success message */}
         {success && (
           <div className="text-sm text-green-600">
             {success}
           </div>
         )}
 
-        {/* Save */}
         <button
           onClick={handleSave}
           disabled={loading}

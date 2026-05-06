@@ -2,28 +2,51 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+type RegisterPayload = {
+  email: string;
+  name: string;
+  password: string;
+};
+
+function isRegisterPayload(value: unknown): value is RegisterPayload {
+  if (typeof value !== "object" || value === null) return false;
+
+  const body = value as Record<string, unknown>;
+  return (
+    typeof body.name === "string" &&
+    typeof body.email === "string" &&
+    typeof body.password === "string"
+  );
+}
+
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body: unknown = await req.json();
 
-    const { name, email, password } = body;
-
-    // ✅ 1. Validation
-    if (!name || !email || !password) {
+    if (!isRegisterPayload(body)) {
       return NextResponse.json(
         { error: "Missing fields" },
         { status: 400 }
       );
     }
 
-    if (password.length < 6) {
+    const name = body.name.trim();
+    const email = body.email.toLowerCase().trim();
+
+    if (!name || !email || !body.password) {
+      return NextResponse.json(
+        { error: "Missing fields" },
+        { status: 400 }
+      );
+    }
+
+    if (body.password.length < 6) {
       return NextResponse.json(
         { error: "Password must be at least 6 characters" },
         { status: 400 }
       );
     }
 
-    // ✅ 2. Check existing user
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -35,24 +58,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ 3. Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(body.password, 10);
 
-    // ✅ 4. Create user + profile
     const user = await prisma.user.create({
       data: {
         name,
         email,
         passwordHash: hashedPassword,
-
-        // 🔥 create empty profile automatically
-        profile: {
-          create: {},
-        },
+        profile: { create: {} },
       },
     });
 
-    // ✅ 5. Return success (NO password)
     return NextResponse.json(
       {
         message: "User created successfully",

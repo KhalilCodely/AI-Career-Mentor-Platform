@@ -17,7 +17,7 @@ const navSections = [
     title: "Main",
     items: [
       { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-      { name: "Roadmap", icon: Map, path: "/dashboard/roadmap" }, // ✅ ADDED
+      { name: "Roadmap", icon: Map, path: "/dashboard/roadmap" },
     ],
   },
   {
@@ -41,9 +41,11 @@ export default function Sidebar() {
 
   const [collapsed, setCollapsed] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     localStorage.clear();
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
+    router.refresh();
   };
 
   return (

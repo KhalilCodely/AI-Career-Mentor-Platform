@@ -1,14 +1,14 @@
-import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { writeFile } from "fs/promises";
 import path from "path";
-import { randomUUID } from "crypto";
+import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
-    const file = formData.get("file") as File;
+    const file = formData.get("file");
 
-    if (!file) {
+    if (!(file instanceof File)) {
       return NextResponse.json(
         { error: "No file uploaded" },
         { status: 400 }
@@ -25,9 +25,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      url: `/uploads/${fileName}`, // ✅ THIS IS IMPORTANT
+      url: `/uploads/${fileName}`,
     });
-
   } catch (error) {
     console.error("UPLOAD ERROR:", error);
 

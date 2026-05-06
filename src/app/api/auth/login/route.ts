@@ -3,9 +3,21 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { createToken } from "@/lib/auth";
 
+type LoginPayload = {
+  email: string;
+  password: string;
+};
+
+function isLoginPayload(value: unknown): value is LoginPayload {
+  if (typeof value !== "object" || value === null) return false;
+
+  const body = value as Record<string, unknown>;
+  return typeof body.email === "string" && typeof body.password === "string";
+}
+
 export async function POST(req: Request) {
   try {
-    let body;
+    let body: unknown;
 
     try {
       body = await req.json();
@@ -16,16 +28,14 @@ export async function POST(req: Request) {
       );
     }
 
-    const { email, password } = body;
-
-    if (!email || !password) {
+    if (!isLoginPayload(body)) {
       return NextResponse.json(
         { error: "Email and password required" },
         { status: 400 }
       );
     }
 
-    const emailNormalized = email.toLowerCase().trim();
+    const emailNormalized = body.email.toLowerCase().trim();
 
     const user = await prisma.user.findUnique({
       where: { email: emailNormalized },
@@ -38,7 +48,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
+    const valid = await bcrypt.compare(body.password, user.passwordHash);
 
     if (!valid) {
       return NextResponse.json(
@@ -70,7 +80,6 @@ export async function POST(req: Request) {
     });
 
     return response;
-
   } catch (error) {
     console.error("LOGIN ERROR:", error);
 

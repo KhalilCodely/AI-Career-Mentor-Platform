@@ -15,8 +15,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // ✅ handle input
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError("");
     setForm({
       ...form,
@@ -24,8 +23,7 @@ export default function LoginPage() {
     });
   };
 
-  // ✅ simple validation
-  const validate = () => {
+    const validate = () => {
     if (!form.email || !form.password) {
       setError("All fields are required");
       return false;
@@ -39,8 +37,7 @@ export default function LoginPage() {
     return true;
   };
 
-  // ✅ submit
-  const handleLogin = async (e?: React.FormEvent) => {
+    const handleLogin = async (e?: React.FormEvent) => {
     e?.preventDefault();
 
     if (!validate()) return;
@@ -60,9 +57,9 @@ export default function LoginPage() {
 
       const text = await res.text();
 
-      let data;
+      let data: { error?: string; role?: string };
       try {
-        data = JSON.parse(text);
+        data = JSON.parse(text) as { error?: string; role?: string };
       } catch {
         console.error("NON-JSON RESPONSE:", text);
         throw new Error("Server error");
@@ -72,9 +69,8 @@ export default function LoginPage() {
         throw new Error(data.error || "Login failed");
       }
 
-      // ✅ smooth redirect
       router.push(data.role === "ADMIN" ? "/admin" : "/dashboard");
-      router.refresh(); // 🔥 ensures auth state updates
+      router.refresh();
 
     } catch (err: unknown) {
       console.error("LOGIN ERROR:", err);
