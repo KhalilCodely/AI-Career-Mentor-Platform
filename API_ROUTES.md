@@ -91,6 +91,35 @@ This document outlines all registered API routes in the Tech Talks Career Mentor
 **Response**: `{ success: boolean, message: string }`  
 **Status**: 200 | 400 | 404 | 500
 
+
+## Roadmap Routes
+
+### GET `/api/roadmap`
+**Purpose**: Get the authenticated user's saved/enrolled roadmap records.
+**Auth**: Requires the `token` cookie.
+**Response**: `{ success: boolean, data: Roadmap[], count: number }`
+**Status**: 200 | 401 | 500
+
+### POST `/api/roadmap`
+**Purpose**: Save a custom roadmap or enroll the authenticated user in an existing career path.
+**Auth**: Requires the `token` cookie.
+**Body**: `{ careerPathId?: string, title?: string, description?: string, roadmap?: object }`
+**Response**: `{ success: boolean, data: Roadmap, message: string }`
+**Status**: 200 | 400 | 401 | 404 | 500
+
+### POST `/api/roadmap/generate`
+**Purpose**: Generate and save a personalized roadmap from the authenticated user's profile, selected skills, and available courses.
+**Auth**: Requires the `token` cookie.
+**Response**: `{ success: boolean, data: Roadmap, message: string }`
+**Status**: 200 | 401 | 404 | 500
+
+### PATCH `/api/roadmap/progress`
+**Purpose**: Update the authenticated user's progress for an enrolled roadmap.
+**Auth**: Requires the `token` cookie.
+**Body**: `{ careerPathId: string, progress: number }`
+**Response**: `{ success: boolean, data: RoadmapProgress, message: string }`
+**Status**: 200 | 400 | 401 | 404 | 500
+
 ## Skills Routes
 
 ### GET `/api/skills`

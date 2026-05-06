@@ -3,8 +3,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 
+type Skill = {
+  id: string;
+  name: string;
+  category?: {
+    name: string;
+  } | null;
+};
+
+type UserSkillSelection = {
+  skillId: string;
+};
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Something went wrong";
+}
+
 export default function SkillsPage() {
-  const [skills, setSkills] = useState<any[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -18,13 +34,13 @@ export default function SkillsPage() {
           fetch("/api/user-skills", { credentials: "include" }),
         ]);
 
-        const skillsData = await skillsRes.json();
-        const userSkillsData = await userSkillsRes.json();
+        const skillsData = await skillsRes.json() as Skill[];
+        const userSkillsData = await userSkillsRes.json() as UserSkillSelection[];
 
         setSkills(skillsData);
 
         const selectedIds = userSkillsData.map(
-          (s: any) => s.skillId
+          (s) => s.skillId
         );
 
         setSelected(selectedIds);
@@ -39,7 +55,7 @@ export default function SkillsPage() {
   }, []);
 
   const grouped = useMemo(() => {
-    const map: Record<string, any[]> = {};
+    const map: Record<string, Skill[]> = {};
 
     skills.forEach((skill) => {
       const category = skill.category?.name || "Other";
@@ -91,9 +107,9 @@ export default function SkillsPage() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      alert(err.message);
+      alert(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

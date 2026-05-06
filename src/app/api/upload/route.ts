@@ -4,6 +4,10 @@ import path from "path";
 
 export const runtime = "nodejs";
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Upload failed";
+}
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -38,11 +42,11 @@ export async function POST(req: Request) {
     const fileUrl = `/uploads/${fileName}`;
 
     return NextResponse.json({ url: fileUrl });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("UPLOAD ERROR:", error);
 
     return NextResponse.json(
-      { error: error.message || "Upload failed" },
+      { error: getErrorMessage(error) },
       { status: 500 }
     );
   }
