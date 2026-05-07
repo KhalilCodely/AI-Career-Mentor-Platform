@@ -19,42 +19,45 @@ type ProfileRecord = {
 } | null;
 
 type ProfilePayload = {
-  bio?: string;
-  education?: string;
-  experienceLevel?: string;
-  careerGoal?: string;
-  profileImage?: string;
+  bio?: unknown;
+  education?: unknown;
+  experienceLevel?: unknown;
+  careerGoal?: unknown;
+  profileImage?: unknown;
 };
 
-/////////////////////////
-// SHARED FORMATTER
-/////////////////////////
+const fieldLimits = {
+  bio: 500,
+  education: 250,
+  experienceLevel: 80,
+  careerGoal: 160,
+  profileImage: 300,
+};
+
+function readString(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 function formatProfile(user: ProfileUser, profile: ProfileRecord) {
   return {
     id: user.id,
     name: user.name,
     email: user.email,
-
     bio: profile?.bio || "",
     education: profile?.education || "",
     experienceLevel: profile?.experienceLevel || "",
     careerGoal: profile?.careerGoal || "",
     profileImage: profile?.profileImage || "",
-
     createdAt: profile?.createdAt || null,
     updatedAt: profile?.updatedAt || null,
   };
 }
 
-/////////////////////////
-// GET PROFILE (IMPROVED)
-/////////////////////////
 export async function GET() {
   try {
     const { userId, error } = await requireUser();
     if (error) return error;
 
-    // ✅ fetch user + profile together (important)
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -69,13 +72,10 @@ export async function GET() {
       );
     }
 
-    const formatted = formatProfile(user, user.profile);
-
     return NextResponse.json({
       success: true,
-      data: formatted,
+      data: formatProfile(user, user.profile),
     });
-
   } catch (error) {
     console.error("GET PROFILE ERROR:", error);
 
@@ -86,56 +86,61 @@ export async function GET() {
   }
 }
 
-/////////////////////////
-// CREATE / UPDATE PROFILE
-/////////////////////////
 export async function POST(req: Request) {
   try {
     const { userId, error } = await requireUser();
     if (error) return error;
 
-    const body = await req.json() as ProfilePayload;
+    let body: ProfilePayload;
 
-    const {
-      bio = "",
-      education = "",
-      experienceLevel = "",
-      careerGoal = "",
-      profileImage = "",
-    } = body;
-
-    // ✅ validation (clean + safe)
-    if (bio.length > 500) {
+    try {
+      body = await req.json() as ProfilePayload;
+    } catch {
       return NextResponse.json(
-        { success: false, error: "Bio too long" },
+        { success: false, error: "Invalid JSON" },
         { status: 400 }
       );
     }
 
-    // ✅ upsert profile
-    const profile = await prisma.profile.upsert({
-      where: { userId },
-      update: {
-        bio,
-        education,
-        experienceLevel,
-        careerGoal,
-        profileImage,
-      },
-      create: {
-        userId,
-        bio,
-        education,
-        experienceLevel,
-        careerGoal,
-        profileImage,
-      },
-    });
+    const payload = {
+      bio: readString(body.bio),
+      education: readString(body.education),
+      experienceLevel: readString(body.experienceLevel),
+      careerGoal: readString(body.careerGoal),
+      profileImage: readString(body.profileImage),
+    };
 
-    // ✅ fetch user again for consistent response
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    for (const [field, value] of Object.entries(payload)) {
+      const limit = fieldLimits[field as keyof typeof fieldLimits];
+
+      if (value.length > limit) {
+        return NextResponse.json(
+          { success: false, error: `${field} must be ${limit} characters or less` },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (payload.profileImage && !payload.profileImage.startsWith("/uploads/")) {
+      return NextResponse.json(
+        { success: false, error: "Invalid profile image URL" },
+        { status: 400 }
+      );
+    }
+
+    const [profile, user] = await prisma.$transaction([
+      prisma.profile.upsert({
+        where: { userId },
+        update: payload,
+        create: {
+          userId,
+          ...payload,
+        },
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+      }),
+    ]);
 
     if (!user) {
       return NextResponse.json(
@@ -144,14 +149,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const formatted = formatProfile(user, profile);
-
     return NextResponse.json({
       success: true,
-      data: formatted,
+      data: formatProfile(user, profile),
       message: "Profile saved successfully",
     });
-
   } catch (error) {
     console.error("SAVE PROFILE ERROR:", error);
 

@@ -1,64 +1,39 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
 
-type JWTPayload = {
-  userId: string;
-  role: "USER" | "ADMIN";
-  iat?: number;
-  exp?: number;
-};
+const protectedPageRoutes = ["/dashboard", "/admin"];
+const protectedApiRoutes = ["/api/protected"];
 
-export function proxy(req: NextRequest) {
+function hasAuthToken(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   const bearerToken = authHeader?.replace(/^Bearer\s+/i, "").trim();
-  const token = req.cookies.get("token")?.value || bearerToken;
 
-  if (!token) {
+  return Boolean(req.cookies.get("token")?.value || bearerToken);
+}
+
+export function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  const authenticated = hasAuthToken(req);
+
+  if (protectedApiRoutes.some((route) => pathname.startsWith(route)) && !authenticated) {
     return NextResponse.json(
       { message: "Unauthorized - No token" },
       { status: 401 }
     );
   }
 
-  if (!process.env.JWT_SECRET) {
-    return NextResponse.json(
-      { message: "Server auth configuration is missing" },
-      { status: 500 }
-    );
-  }
+  if (protectedPageRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))) {
+    if (!authenticated) {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("next", pathname);
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET) as JWTPayload;
-
-    const isAdminRoute = req.nextUrl.pathname.startsWith(
-      "/api/protected/test/admin"
-    );
-
-    if (isAdminRoute && decoded.role !== "ADMIN") {
-      return NextResponse.json(
-        { message: "Forbidden - Admins only" },
-        { status: 403 }
-      );
+      return NextResponse.redirect(loginUrl);
     }
-
-    const requestHeaders = new Headers(req.headers);
-    requestHeaders.set("x-user-id", decoded.userId);
-    requestHeaders.set("x-user-role", decoded.role);
-
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
-    });
-  } catch {
-    return NextResponse.json(
-      { message: "Invalid or expired token" },
-      { status: 401 }
-    );
   }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/api/protected/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/api/protected/:path*"],
 };

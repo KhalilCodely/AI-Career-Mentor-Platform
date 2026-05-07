@@ -96,8 +96,9 @@ export default function RegisterPage() {
         <input
           name="password"
           type="password"
-          placeholder="Password"
+          placeholder="Password (min 8 characters)"
           required
+          minLength={8}
           onChange={handleChange}
           className="w-full mb-4 p-2 border rounded"
         />

@@ -73,7 +73,7 @@ export default function LoginPage() {
       }
 
       // ✅ smooth redirect
-      router.push(data.role === "ADMIN" ? "/admin" : "/dashboard");
+      router.push("/dashboard");
       router.refresh(); // 🔥 ensures auth state updates
 
     } catch (err: unknown) {
