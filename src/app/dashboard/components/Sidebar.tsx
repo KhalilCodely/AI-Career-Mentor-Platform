@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpen,
   Brain,
+  FileText,
   ChevronLeft,
   LayoutDashboard,
   LogOut,
@@ -29,6 +30,7 @@ const navSections = [
     items: [
       { name: "Profile", icon: User, path: "/dashboard/profile" },
       { name: "Skills", icon: Brain, path: "/dashboard/skills" },
+      { name: "Resume Checker", icon: FileText, path: "/dashboard/resume-checker" },
     ],
   },
   {

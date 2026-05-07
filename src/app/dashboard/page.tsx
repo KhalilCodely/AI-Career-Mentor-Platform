@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Brain, Map, Milestone, Sparkles, User } from "lucide-react";
+import { BookOpen, Brain, FileText, Map, Milestone, Sparkles, User } from "lucide-react";
 
 const cards = [
   {
@@ -22,6 +22,14 @@ const cards = [
     href: "/dashboard/courses",
     icon: BookOpen,
     tone: "from-emerald-500 to-teal-500",
+  },
+
+  {
+    title: "Resume Checker",
+    description: "Review your resume with AI feedback based on your profile, optional skills, and matching courses.",
+    href: "/dashboard/resume-checker",
+    icon: FileText,
+    tone: "from-sky-500 to-blue-500",
   },
   {
     title: "Skills",
@@ -51,7 +59,7 @@ export default function Dashboard() {
             </div>
             <h1 className="text-3xl font-bold tracking-tight md:text-5xl">Choose a path, build skills, and track progress.</h1>
             <p className="mt-4 text-sm leading-6 text-slate-200 md:text-base">
-              Start with a seeded career path, then use AI roadmap generation and course progress tracking to turn your goal into a practical learning plan.
+              Start with a seeded career path, then use AI roadmap generation, resume checking, and course progress tracking to turn your goal into a practical learning plan.
             </p>
           </div>
         </div>
