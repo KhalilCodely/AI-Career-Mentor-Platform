@@ -2,6 +2,84 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+const careerPathSeeds = [
+  { title: "Frontend Developer", category: "Development", level: "Beginner to Intermediate", weeks: 16, skills: ["JavaScript", "TypeScript", "React", "Next.js", "UI Design"], summary: "Build responsive, accessible web interfaces and ship production-ready React and Next.js applications." },
+  { title: "Backend Developer", category: "Development", level: "Intermediate", weeks: 18, skills: ["Node.js", "Express.js", "SQL", "Docker", "CI/CD"], summary: "Design APIs, model data, secure services, and deploy reliable server-side applications." },
+  { title: "Full Stack Developer", category: "Development", level: "Intermediate", weeks: 20, skills: ["TypeScript", "React", "Next.js", "Node.js", "SQL"], summary: "Connect polished user experiences with robust APIs, databases, authentication, and deployments." },
+  { title: "Data Analyst", category: "Data", level: "Beginner", weeks: 14, skills: ["SQL", "Python", "Data Analysis"], summary: "Turn raw data into clear business insights using SQL, Python, dashboards, and storytelling." },
+  { title: "Data Scientist", category: "Data", level: "Intermediate", weeks: 22, skills: ["Python", "SQL", "Machine Learning", "Data Analysis"], summary: "Build statistical models, evaluate machine learning systems, and communicate data-backed recommendations." },
+  { title: "Machine Learning Engineer", category: "Data", level: "Advanced", weeks: 24, skills: ["Python", "Machine Learning", "Docker", "AWS", "CI/CD"], summary: "Productionize ML workflows from experimentation through deployment, monitoring, and iteration." },
+  { title: "DevOps Engineer", category: "DevOps", level: "Intermediate", weeks: 20, skills: ["Docker", "Kubernetes", "AWS", "CI/CD"], summary: "Automate delivery pipelines, cloud infrastructure, containers, observability, and release processes." },
+  { title: "Cloud Engineer", category: "DevOps", level: "Intermediate", weeks: 18, skills: ["AWS", "Docker", "Kubernetes", "CI/CD"], summary: "Design secure cloud foundations, deploy workloads, and optimize reliability and cost." },
+  { title: "UI Designer", category: "Design", level: "Beginner", weeks: 12, skills: ["UI Design", "Figma", "UX Design"], summary: "Create visual systems, high-fidelity interfaces, and handoff-ready designs for digital products." },
+  { title: "UX Designer", category: "Design", level: "Beginner to Intermediate", weeks: 16, skills: ["UX Design", "UI Design", "Figma", "Data Analysis"], summary: "Research user needs, map flows, prototype experiences, and validate product decisions." },
+  { title: "Product Designer", category: "Design", level: "Intermediate", weeks: 18, skills: ["UX Design", "UI Design", "Figma", "React"], summary: "Blend research, interaction design, visual craft, and product thinking into portfolio-ready case studies." },
+  { title: "Mobile App Developer", category: "Mobile", level: "Intermediate", weeks: 18, skills: ["React Native", "Flutter", "TypeScript", "UI Design"], summary: "Build performant cross-platform mobile apps with strong UX, state management, and release basics." },
+  { title: "React Native Developer", category: "Mobile", level: "Intermediate", weeks: 16, skills: ["React Native", "React", "TypeScript", "Node.js"], summary: "Specialize in React Native screens, navigation, native integrations, API usage, and app-store readiness." },
+  { title: "QA Automation Engineer", category: "Development", level: "Beginner to Intermediate", weeks: 14, skills: ["JavaScript", "TypeScript", "CI/CD", "Docker"], summary: "Create automated test suites, quality gates, and bug-prevention workflows for web products." },
+  { title: "Cybersecurity Analyst", category: "DevOps", level: "Beginner", weeks: 18, skills: ["AWS", "SQL", "Python", "CI/CD"], summary: "Learn security fundamentals, threat detection, cloud safeguards, and practical incident response habits." },
+  { title: "Technical Product Manager", category: "Leadership", level: "Intermediate", weeks: 16, skills: ["Data Analysis", "UX Design", "SQL", "React"], summary: "Translate customer problems into prioritized product bets with metrics, discovery, and delivery rituals." },
+  { title: "Solutions Architect", category: "DevOps", level: "Advanced", weeks: 24, skills: ["AWS", "Node.js", "SQL", "Docker", "Kubernetes"], summary: "Design scalable system architectures, make tradeoffs, and communicate implementation plans to teams." },
+  { title: "AI Application Developer", category: "Data", level: "Intermediate", weeks: 20, skills: ["Python", "Machine Learning", "Next.js", "Node.js", "TypeScript"], summary: "Build AI-powered product features with strong UX, APIs, evaluation loops, and responsible guardrails." },
+  { title: "Database Administrator", category: "Data", level: "Intermediate", weeks: 16, skills: ["SQL", "AWS", "Docker", "Data Analysis"], summary: "Manage schema design, performance tuning, backups, access controls, and operational database health." },
+  { title: "Engineering Manager", category: "Leadership", level: "Advanced", weeks: 20, skills: ["CI/CD", "UX Design", "Data Analysis", "Node.js"], summary: "Grow from senior contributor to people leader with delivery systems, coaching, planning, and metrics." },
+];
+
+function buildCareerRoadmap(path: typeof careerPathSeeds[number]) {
+  return {
+    title: `${path.title} career path`,
+    description: path.summary,
+    careerGoal: path.title,
+    experienceLevel: path.level,
+    selectedSkills: path.skills.map((name, index) => ({ id: `seed-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`, name, level: Math.min(index + 1, 5), category: path.category })),
+    phases: [
+      {
+        id: "phase-1",
+        title: "Phase 1: Foundations",
+        description: `Build the baseline concepts for ${path.title} work and refresh the first tools employers expect.`,
+        focus: path.skills.slice(0, 2).join(" + "),
+        outcome: "Finish fundamentals, document notes, and complete two small practice exercises.",
+        courses: [],
+        progress: 0,
+      },
+      {
+        id: "phase-2",
+        title: "Phase 2: Role practice",
+        description: "Apply the core skill stack through guided projects, code reviews, portfolio drafts, or case-study work.",
+        focus: path.skills.slice(2, 4).join(" + ") || path.skills[0],
+        outcome: "Ship one realistic role-specific project with clear success criteria.",
+        courses: [],
+        progress: 0,
+      },
+      {
+        id: "phase-3",
+        title: "Phase 3: Portfolio and interviews",
+        description: "Package proof of skill, fill remaining gaps, and rehearse practical interview or stakeholder scenarios.",
+        focus: path.skills.slice(4).join(" + ") || "Portfolio readiness",
+        outcome: "Publish a polished portfolio artifact and a 30-day job-search or promotion plan.",
+        courses: [],
+        progress: 0,
+      },
+    ],
+    overallProgress: 0,
+    generatedAt: new Date().toISOString(),
+    aiProvider: "local",
+    aiModel: "seeded-career-path-v1",
+    aiGenerated: false,
+    uses: { profile: false, skills: true, courses: false, progress: false, ai: false },
+    weeklyCommitment: path.weeks <= 14 ? "5-7 focused hours per week" : path.weeks <= 18 ? "7-9 focused hours per week" : "8-10 focused hours per week",
+    successMetrics: [
+      `Complete the ${path.skills[0]} foundation milestone`,
+      "Publish one portfolio artifact with a short case-study write-up",
+      "Track weekly learning progress and blockers",
+    ],
+    durationWeeks: path.weeks,
+    category: path.category,
+    coreSkills: path.skills,
+  };
+}
+
+
 async function main() {
   const data = [
     {
@@ -138,7 +216,25 @@ async function main() {
     }
   }
 
-  console.log(`✅ Skills + ${courses.length} courses seeded`);
+  // ✅ CAREER PATHS
+  for (const careerPath of careerPathSeeds) {
+    const roadmap = buildCareerRoadmap(careerPath);
+
+    await prisma.careerPath.upsert({
+      where: { title: careerPath.title },
+      update: {
+        description: careerPath.summary,
+        roadmap,
+      },
+      create: {
+        title: careerPath.title,
+        description: careerPath.summary,
+        roadmap,
+      },
+    });
+  }
+
+  console.log(`✅ Skills + ${courses.length} courses + ${careerPathSeeds.length} career paths seeded`);
 }
 
 main()
