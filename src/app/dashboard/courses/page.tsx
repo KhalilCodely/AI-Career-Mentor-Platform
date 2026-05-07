@@ -9,6 +9,7 @@ type Course = {
   provider: string;
   url: string;
   icon?: string | null;
+  imageUrl?: string | null;
   skill: {
     id: string;
     name: string;

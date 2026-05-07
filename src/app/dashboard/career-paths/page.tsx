@@ -8,6 +8,8 @@ type CareerPath = {
   id: string;
   title: string;
   description: string | null;
+  icon?: string | null;
+  imageUrl?: string | null;
   category: string;
   durationWeeks: number | null;
   coreSkills: string[];
@@ -242,8 +244,8 @@ export default function CareerPathsPage() {
           return (
             <article key={path.id} className="group flex min-h-96 flex-col rounded-3xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
               <div className="mb-4 flex items-start justify-between gap-3">
-                <div className="flex size-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-950">
-                  <Route size={24} />
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-slate-100 text-2xl text-slate-950">
+                  {path.icon || <Route size={24} />}
                 </div>
                 <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-gray-600">{path.category}</span>
               </div>

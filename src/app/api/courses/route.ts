@@ -43,7 +43,8 @@ export async function GET() {
     return NextResponse.json(
       courses.map((course) => ({
         ...course,
-        icon: skillIcons[course.skill.name] || "📘",
+        icon: course.icon || skillIcons[course.skill.name] || "📘",
+        imageUrl: course.imageUrl || null,
       }))
     );
   } catch (error) {

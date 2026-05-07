@@ -8,6 +8,8 @@ type CareerPathRoadmap = {
   durationWeeks?: number;
   coreSkills?: string[];
   weeklyCommitment?: string;
+  icon?: string;
+  imageUrl?: string;
   phases?: { title?: string; focus?: string; outcome?: string }[];
 };
 
@@ -21,6 +23,8 @@ function toCareerPathSummary(path: {
   description: string | null;
   roadmap: Prisma.JsonValue;
   createdAt: Date;
+  icon: string | null;
+  imageUrl: string | null;
   updatedAt: Date;
 }) {
   const roadmap = path.roadmap && typeof path.roadmap === "object" && !Array.isArray(path.roadmap)
@@ -31,6 +35,8 @@ function toCareerPathSummary(path: {
     id: path.id,
     title: path.title,
     description: path.description,
+    icon: path.icon || roadmap.icon || "🧭",
+    imageUrl: path.imageUrl || roadmap.imageUrl || null,
     category: roadmap.category || "Career",
     durationWeeks: roadmap.durationWeeks || null,
     coreSkills: Array.isArray(roadmap.coreSkills) ? roadmap.coreSkills : [],
