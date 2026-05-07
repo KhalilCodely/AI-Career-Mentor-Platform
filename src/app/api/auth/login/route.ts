@@ -16,7 +16,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const { email, password } = body;
+    const email = typeof body.email === "string" ? body.email.toLowerCase().trim() : "";
+    const password = typeof body.password === "string" ? body.password : "";
 
     if (!email || !password) {
       return NextResponse.json(
@@ -25,10 +26,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const emailNormalized = email.toLowerCase().trim();
-
     const user = await prisma.user.findUnique({
-      where: { email: emailNormalized },
+      where: { email },
     });
 
     if (!user) {
@@ -58,6 +57,8 @@ export async function POST(req: Request) {
       user: {
         id: user.id,
         email: user.email,
+        name: user.name,
+        role: user.role,
       },
     });
 

@@ -2,28 +2,56 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+type RegisterPayload = {
+  name?: unknown;
+  email?: unknown;
+  password?: unknown;
+};
+
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    let body: RegisterPayload;
 
-    const { name, email, password } = body;
+    try {
+      body = await req.json() as RegisterPayload;
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
 
-    // ✅ 1. Validation
+    const name = typeof body.name === "string" ? body.name.trim() : "";
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const password = typeof body.password === "string" ? body.password : "";
+
     if (!name || !email || !password) {
       return NextResponse.json(
-        { error: "Missing fields" },
+        { error: "Name, email, and password are required" },
         { status: 400 }
       );
     }
 
-    if (password.length < 6) {
+    if (name.length < 2 || name.length > 120) {
       return NextResponse.json(
-        { error: "Password must be at least 6 characters" },
+        { error: "Name must be between 2 and 120 characters" },
         { status: 400 }
       );
     }
 
-    // ✅ 2. Check existing user
+    if (!emailPattern.test(email)) {
+      return NextResponse.json(
+        { error: "Enter a valid email address" },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 8) {
+      return NextResponse.json(
+        { error: "Password must be at least 8 characters" },
+        { status: 400 }
+      );
+    }
+
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -35,28 +63,28 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ 3. Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
-    // ✅ 4. Create user + profile
     const user = await prisma.user.create({
       data: {
         name,
         email,
         passwordHash: hashedPassword,
-
-        // 🔥 create empty profile automatically
         profile: {
           create: {},
         },
       },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+      },
     });
 
-    // ✅ 5. Return success (NO password)
     return NextResponse.json(
       {
         message: "User created successfully",
-        userId: user.id,
+        user,
       },
       { status: 201 }
     );
