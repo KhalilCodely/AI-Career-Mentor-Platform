@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   Map,
+  Milestone,
   Menu,
   Sparkles,
   User,
@@ -20,6 +21,7 @@ const navSections = [
     items: [
       { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
       { name: "Roadmap", icon: Map, path: "/dashboard/roadmap" },
+      { name: "Career Paths", icon: Milestone, path: "/dashboard/career-paths" },
     ],
   },
   {
@@ -171,8 +173,8 @@ export default function Sidebar() {
       </aside>
 
       <nav className="fixed inset-x-3 bottom-3 z-50 rounded-[1.75rem] border border-gray-200 bg-white/95 p-2 shadow-2xl shadow-gray-950/15 backdrop-blur md:hidden">
-        <div className="grid grid-cols-5 gap-1">
-          {mobileNavItems.slice(0, 5).map((item) => {
+        <div className="grid grid-cols-6 gap-1">
+          {mobileNavItems.map((item) => {
             const isActive =
               pathname === item.path ||
               (item.path !== "/dashboard" && pathname.startsWith(item.path));
