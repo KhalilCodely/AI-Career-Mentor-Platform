@@ -31,6 +31,7 @@ type RoadmapCourse = {
   completed: boolean;
   why?: string;
   milestone?: string;
+  source?: "catalog" | "ai" | "fallback";
 };
 
 type RoadmapPhase = {
@@ -339,6 +340,12 @@ export default function RoadmapPage() {
                             <div className="mb-2 flex flex-wrap items-center gap-2">
                               <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">{course.skill}</span>
                               <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">{course.provider}</span>
+                              {course.source === "ai" && (
+                                <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700">AI course link</span>
+                              )}
+                              {course.source === "fallback" && (
+                                <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">Verified fallback</span>
+                              )}
                               {course.completed && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
                                   <CheckCircle2 size={13} /> Complete

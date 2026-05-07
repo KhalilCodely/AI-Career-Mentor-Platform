@@ -30,6 +30,7 @@ type RoadmapCourse = {
   completed: boolean;
   why?: string;
   milestone?: string;
+  source?: "catalog" | "ai" | "fallback";
 };
 
 type RoadmapPhase = {
@@ -55,14 +56,24 @@ type Roadmap = {
   aiModel: string;
   aiGenerated: boolean;
   uses: {
-    profile: true;
-    skills: true;
-    courses: true;
-    progress: true;
+    profile: boolean;
+    skills: boolean;
+    courses: boolean;
+    progress: boolean;
     ai: boolean;
   };
   weeklyCommitment?: string;
   successMetrics?: string[];
+};
+
+type AiSuggestedCourse = {
+  title?: string;
+  provider?: string;
+  url?: string;
+  skill?: string;
+  category?: string;
+  why?: string;
+  milestone?: string;
 };
 
 type AiRoadmapDraft = {
@@ -76,6 +87,7 @@ type AiRoadmapDraft = {
     focus?: string;
     outcome?: string;
     courseIds?: string[];
+    courses?: AiSuggestedCourse[];
     courseNotes?: Record<string, { why?: string; milestone?: string }>;
   }[];
 };
@@ -192,6 +204,7 @@ function toRoadmapCourse(course: CourseWithSkill, note?: { why?: string; milesto
     completed: savedProgress.completed,
     why: note?.why,
     milestone: note?.milestone,
+    source: "catalog",
   };
 }
 
@@ -284,7 +297,7 @@ function buildPrompt({
   }));
 
   return JSON.stringify({
-    instruction: "Create a precise 3-phase career learning roadmap. Return only valid JSON. Use only course IDs from courseCatalog. Prioritize unfinished courses, respect current progress, and personalize from profile, selected skills, courses, and progress. Keep descriptions concise and actionable.",
+    instruction: "Create a precise 3-phase career learning roadmap. Return only valid JSON. Personalize from profile, selected skills, career goal, experience level, available course catalog, and progress. You may use courseIds from courseCatalog, but you must also recommend real public courses when the catalog is missing or insufficient. Every suggested course URL must be an absolute http(s) link to an official provider course/catalog page; never invent fake links. Prefer reputable sources such as Coursera, edX, freeCodeCamp, Microsoft Learn, AWS Skill Builder, Google, Kaggle, MDN, Vercel, Kubernetes, Docker, and official documentation/learn portals. Keep descriptions concise and actionable.",
     requiredJsonShape: {
       title: "string",
       description: "string",
@@ -296,8 +309,9 @@ function buildPrompt({
           focus: "string",
           description: "string",
           outcome: "string",
-          courseIds: ["course-id-from-catalog"],
-          courseNotes: { "course-id-from-catalog": { why: "string", milestone: "string" } },
+          courseIds: ["optional-course-id-from-catalog"],
+          courses: [{ title: "string", provider: "string", url: "https://...", skill: "string", category: "string", why: "string", milestone: "string" }],
+          courseNotes: { "optional-course-id-from-catalog": { why: "string", milestone: "string" } },
         },
       ],
     },
@@ -389,6 +403,129 @@ async function callGeminiRoadmap(prompt: string) {
   };
 }
 
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48) || "course";
+}
+
+function isSafeCourseUrl(url?: string) {
+  if (!url) return false;
+
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+function toAiRoadmapCourse(course: AiSuggestedCourse, phaseIndex: number, courseIndex: number): RoadmapCourse | null {
+  const title = course.title?.trim();
+  const provider = course.provider?.trim();
+  const url = course.url?.trim();
+
+  if (!title || !provider || !isSafeCourseUrl(url)) return null;
+
+  return {
+    id: `ai-${phaseIndex + 1}-${courseIndex + 1}-${slugify(`${provider}-${title}`)}`,
+    title,
+    provider,
+    url: url as string,
+    skill: course.skill?.trim() || "Career skill",
+    category: course.category?.trim() || "AI recommended course",
+    progress: 0,
+    completed: false,
+    why: course.why?.trim(),
+    milestone: course.milestone?.trim(),
+    source: "ai",
+  };
+}
+
+const fallbackCourseTemplates: Record<string, Omit<RoadmapCourse, "id" | "progress" | "completed" | "source">[]> = {
+  frontend: [
+    { title: "Responsive Web Design", provider: "freeCodeCamp", url: "https://www.freecodecamp.org/learn/2022/responsive-web-design/", skill: "HTML/CSS", category: "Frontend development", why: "Builds the UI fundamentals expected in frontend roles.", milestone: "Ship a responsive landing page." },
+    { title: "Learn React", provider: "React", url: "https://react.dev/learn", skill: "React", category: "Frontend development", why: "Covers modern React concepts directly from the official docs.", milestone: "Build a component-based dashboard." },
+    { title: "Next.js Learn", provider: "Vercel", url: "https://nextjs.org/learn", skill: "Next.js", category: "Frontend development", why: "Connects React knowledge to production app routing and data patterns.", milestone: "Deploy a full-stack Next.js project." },
+  ],
+  data: [
+    { title: "Python for Everybody", provider: "Coursera", url: "https://www.coursera.org/specializations/python", skill: "Python", category: "Data", why: "Strengthens programming basics for data workflows.", milestone: "Automate a data cleanup task." },
+    { title: "Intro to Machine Learning", provider: "Kaggle", url: "https://www.kaggle.com/learn/intro-to-machine-learning", skill: "Machine Learning", category: "Data", why: "Provides hands-on model-building practice in a browser environment.", milestone: "Submit a baseline ML notebook." },
+    { title: "SQL Tutorial", provider: "Mode", url: "https://mode.com/sql-tutorial/", skill: "SQL", category: "Data", why: "Teaches practical querying for analysis and reporting.", milestone: "Answer portfolio questions with SQL." },
+  ],
+  cloud: [
+    { title: "AWS Cloud Practitioner Essentials", provider: "AWS Skill Builder", url: "https://skillbuilder.aws/learn", skill: "AWS", category: "Cloud", why: "Builds cloud vocabulary and service awareness for cloud roles.", milestone: "Map an app architecture to AWS services." },
+    { title: "Docker Get Started", provider: "Docker", url: "https://docs.docker.com/get-started/", skill: "Docker", category: "DevOps", why: "Introduces container workflows used in modern deployments.", milestone: "Containerize a sample application." },
+    { title: "Kubernetes Basics", provider: "Kubernetes", url: "https://kubernetes.io/docs/tutorials/kubernetes-basics/", skill: "Kubernetes", category: "DevOps", why: "Explains orchestration concepts with official interactive tutorials.", milestone: "Deploy and scale a demo workload." },
+  ],
+  general: [
+    { title: "CS50x: Introduction to Computer Science", provider: "edX", url: "https://www.edx.org/learn/computer-science/harvard-university-cs50-s-introduction-to-computer-science", skill: "Computer Science", category: "Foundations", why: "Builds durable technical problem-solving foundations.", milestone: "Complete one programming problem set." },
+    { title: "Foundational C# with Microsoft", provider: "freeCodeCamp", url: "https://www.freecodecamp.org/learn/foundational-c-sharp-with-microsoft/", skill: "Programming", category: "Foundations", why: "Provides structured programming practice with a recognized curriculum.", milestone: "Build a small console app." },
+    { title: "GitHub Skills", provider: "GitHub", url: "https://skills.github.com/", skill: "Git/GitHub", category: "Professional tooling", why: "Practices collaboration workflows used across tech roles.", milestone: "Publish a portfolio repository." },
+  ],
+};
+
+function pickFallbackCourses(careerGoal: string, selectedSkills: { skill: { name: string; category: { name: string } | null } }[]) {
+  const signal = `${careerGoal} ${selectedSkills.map((userSkill) => `${userSkill.skill.name} ${userSkill.skill.category?.name || ""}`).join(" ")}`.toLowerCase();
+
+  if (/front|react|next|web|ui|javascript|typescript/.test(signal)) return fallbackCourseTemplates.frontend;
+  if (/data|python|sql|machine|analytics|ai|ml/.test(signal)) return fallbackCourseTemplates.data;
+  if (/cloud|devops|aws|docker|kubernetes|ci\/?cd/.test(signal)) return fallbackCourseTemplates.cloud;
+  return fallbackCourseTemplates.general;
+}
+
+function assembleExternalFallbackRoadmap({
+  careerGoal,
+  experienceLevel,
+  selectedSkills,
+}: {
+  careerGoal: string;
+  experienceLevel: string;
+  selectedSkills: { skillId: string; level: number; skill: { id: string; name: string; category: { name: string } | null } }[];
+}): Roadmap {
+  const fallbackCourses = pickFallbackCourses(careerGoal, selectedSkills);
+  const phases = phaseTemplates.map((phase, index) => ({
+    ...phase,
+    courses: fallbackCourses.slice(index, index + 1).map((course) => ({
+      ...course,
+      id: `fallback-${index + 1}-${slugify(`${course.provider}-${course.title}`)}`,
+      progress: 0,
+      completed: false,
+      source: "fallback" as const,
+    })),
+    progress: 0,
+  }));
+
+  return {
+    title: `${careerGoal} roadmap`,
+    description: `A personalized ${experienceLevel.toLowerCase()} learning path built from your profile and skills with verified public course links. Add an OpenAI or Gemini API key for a fully AI-generated plan.`,
+    careerGoal,
+    experienceLevel,
+    selectedSkills: selectedSkills.map((userSkill) => ({
+      id: userSkill.skill.id,
+      name: userSkill.skill.name,
+      level: userSkill.level,
+      category: userSkill.skill.category?.name || "Career skill",
+    })),
+    phases,
+    overallProgress: 0,
+    generatedAt: new Date().toISOString(),
+    aiProvider: "local",
+    aiModel: "verified-course-fallback",
+    aiGenerated: false,
+    uses: { profile: true, skills: true, courses: false, progress: false, ai: false },
+    weeklyCommitment: experienceLevel.toLowerCase().includes("beginner") ? "5-7 focused hours per week" : "7-10 focused hours per week",
+    successMetrics: [
+      "Complete one linked resource per phase",
+      "Turn each milestone into a portfolio artifact",
+      "Regenerate with an AI API key when you want deeper personalization",
+    ],
+  };
+}
+
 function applyAiDraft({
   draft,
   courses,
@@ -412,6 +549,10 @@ function applyAiDraft({
     const aiPhase = draft.phases?.[index];
     const validCourseIds = (aiPhase?.courseIds || []).filter((id) => courseById.has(id) && !usedCourseIds.has(id));
     validCourseIds.forEach((id) => usedCourseIds.add(id));
+    const catalogCourses = validCourseIds.map((id) => toRoadmapCourse(courseById.get(id) as CourseWithSkill, aiPhase?.courseNotes?.[id]));
+    const suggestedCourses = (aiPhase?.courses || [])
+      .map((course, courseIndex) => toAiRoadmapCourse(course, index, courseIndex))
+      .filter((course): course is RoadmapCourse => Boolean(course));
 
     return {
       ...template,
@@ -419,24 +560,28 @@ function applyAiDraft({
       description: aiPhase?.description || template.description,
       focus: aiPhase?.focus || template.focus,
       outcome: aiPhase?.outcome || template.outcome,
-      courses: validCourseIds.map((id) => toRoadmapCourse(courseById.get(id) as CourseWithSkill, aiPhase?.courseNotes?.[id])),
+      courses: [...catalogCourses, ...suggestedCourses],
       progress: 0,
     };
   });
 
-  courses.forEach((course, index) => {
-    if (usedCourseIds.has(course.id)) return;
+  if (phases.every((phase) => phase.courses.length === 0)) {
+    courses.slice(0, 6).forEach((course, index) => {
+      phases[index % phases.length].courses.push(toRoadmapCourse(course));
+    });
+  }
 
-    const shortestPhaseIndex = phases.reduce((bestIndex, phase, currentIndex) => (
-      phase.courses.length < phases[bestIndex].courses.length ? currentIndex : bestIndex
-    ), index % phases.length);
-    phases[shortestPhaseIndex].courses.push(toRoadmapCourse(course));
-  });
-
+  const fallbackCourses = pickFallbackCourses(careerGoal, selectedSkills);
   phases.forEach((phase, index) => {
     if (phase.courses.length === 0) {
-      const fallbackCourse = courses[index % Math.max(courses.length, 1)];
-      if (fallbackCourse) phase.courses.push(toRoadmapCourse(fallbackCourse));
+      const fallbackCourse = fallbackCourses[index % fallbackCourses.length];
+      phase.courses.push({
+        ...fallbackCourse,
+        id: `fallback-${index + 1}-${slugify(`${fallbackCourse.provider}-${fallbackCourse.title}`)}`,
+        progress: 0,
+        completed: false,
+        source: "fallback",
+      });
     }
 
     phase.progress = average(phase.courses.map((course) => course.progress));
@@ -459,7 +604,7 @@ function applyAiDraft({
     aiProvider,
     aiModel,
     aiGenerated: true,
-    uses: { profile: true, skills: true, courses: true, progress: true, ai: true },
+    uses: { profile: true, skills: true, courses: courses.length > 0, progress: courses.length > 0, ai: true },
     weeklyCommitment: draft.weeklyCommitment || "6-8 focused hours per week",
     successMetrics: Array.isArray(draft.successMetrics) ? draft.successMetrics.slice(0, 4) : [
       "Complete each phase outcome before moving forward",
@@ -620,13 +765,6 @@ export async function POST() {
       take: 12,
     });
 
-    if (courses.length === 0) {
-      return NextResponse.json(
-        { success: false, error: "Select skills or seed courses before generating a roadmap" },
-        { status: 400 }
-      );
-    }
-
     const roadmap = await generateAiRoadmap({
       name: user.name,
       bio: user.profile?.bio,
@@ -635,12 +773,16 @@ export async function POST() {
       experienceLevel,
       selectedSkills: user.skills,
       courses,
-    }) || assembleLocalRoadmap({
+    }) || (courses.length > 0 ? assembleLocalRoadmap({
       careerGoal,
       experienceLevel,
       selectedSkills: user.skills,
       courses,
-    });
+    }) : assembleExternalFallbackRoadmap({
+      careerGoal,
+      experienceLevel,
+      selectedSkills: user.skills,
+    }));
     const careerPathTitle = `${careerGoal} roadmap - ${userId.slice(0, 8)} - ${Date.now()}`;
 
     const saved = await prisma.$transaction(async (tx) => {
