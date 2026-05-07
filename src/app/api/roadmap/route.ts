@@ -160,6 +160,7 @@ function normalizeRoadmap(roadmap: Prisma.JsonValue | null, progressByCourseId: 
 
   return {
     ...data,
+    selectedSkills: Array.isArray(data.selectedSkills) ? data.selectedSkills : [],
     phases,
     overallProgress: average(phases.flatMap((phase) => phase.courses.map((course) => course.progress))),
     aiProvider: data.aiProvider || "local",

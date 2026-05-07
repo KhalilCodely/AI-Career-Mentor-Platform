@@ -48,8 +48,8 @@ type Roadmap = {
   description: string;
   careerGoal: string;
   experienceLevel: string;
-  selectedSkills: { id: string; name: string; level: number; category: string }[];
-  phases: RoadmapPhase[];
+  selectedSkills?: { id: string; name: string; level: number; category: string }[];
+  phases?: RoadmapPhase[];
   overallProgress: number;
   generatedAt: string;
   aiProvider: "openai" | "gemini" | "local";
@@ -128,17 +128,19 @@ export default function RoadmapPage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
 
+  const roadmapPhases = useMemo(() => roadmap?.phases ?? [], [roadmap]);
+  const roadmapSelectedSkills = useMemo(() => roadmap?.selectedSkills ?? [], [roadmap]);
   const totalCourses = useMemo(
-    () => roadmap?.phases.reduce((sum, phase) => sum + phase.courses.length, 0) || 0,
-    [roadmap]
+    () => roadmapPhases.reduce((sum, phase) => sum + phase.courses.length, 0),
+    [roadmapPhases]
   );
   const completedCourses = useMemo(
-    () => roadmap?.phases.reduce((sum, phase) => sum + phase.courses.filter((course) => course.completed).length, 0) || 0,
-    [roadmap]
+    () => roadmapPhases.reduce((sum, phase) => sum + phase.courses.filter((course) => course.completed).length, 0),
+    [roadmapPhases]
   );
   const nextCourse = useMemo(
-    () => roadmap?.phases.flatMap((phase) => phase.courses).find((course) => !course.completed),
-    [roadmap]
+    () => roadmapPhases.flatMap((phase) => phase.courses).find((course) => !course.completed),
+    [roadmapPhases]
   );
 
   const generateRoadmap = async () => {
@@ -305,7 +307,7 @@ export default function RoadmapPage() {
 
           <section className="grid gap-6 xl:grid-cols-[1fr_22rem]">
             <div className="space-y-5">
-              {roadmap.phases.map((phase, index) => (
+              {roadmapPhases.map((phase, index) => (
                 <article key={phase.id} className="overflow-hidden rounded-[2rem] border bg-white shadow-sm">
                   <div className="border-b bg-slate-50/80 p-5 md:p-6">
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -378,7 +380,7 @@ export default function RoadmapPage() {
               <div className="rounded-[2rem] border bg-white p-5 shadow-sm">
                 <h2 className="text-lg font-bold text-slate-950">Selected skills</h2>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {roadmap.selectedSkills.length > 0 ? roadmap.selectedSkills.map((skill) => (
+                  {roadmapSelectedSkills.length > 0 ? roadmapSelectedSkills.map((skill) => (
                     <span key={skill.id} className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700">
                       {skill.name} · L{skill.level}
                     </span>
