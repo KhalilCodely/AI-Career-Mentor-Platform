@@ -1,25 +1,12 @@
+import OpenAI from "openai";
 import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 
-type CourseWithSkill = {
-  id: string;
-  title: string;
-  provider: string;
-  url: string;
-  skill: {
-    id: string;
-    name: string;
-    category: { name: string } | null;
-  };
-  progress: {
-    progress: Prisma.Decimal;
-    completed: boolean;
-  }[];
-};
+type RoadmapGenerator = "AI" | "Template fallback";
 
-type RoadmapCourse = {
+type CourseSnapshot = {
   id: string;
   title: string;
   provider: string;
@@ -27,178 +14,382 @@ type RoadmapCourse = {
   skill: string;
   category: string;
   progress: number;
-  completed: boolean;
 };
 
 type RoadmapPhase = {
-  id: string;
   title: string;
-  description: string;
+  timeframe: string;
   focus: string;
-  courses: RoadmapCourse[];
-  progress: number;
+  goals: string[];
+  milestones: string[];
+  courses: CourseSnapshot[];
 };
 
-type Roadmap = {
-  title: string;
-  description: string;
-  careerGoal: string;
+type RoadmapContent = {
+  targetRole: string;
   experienceLevel: string;
-  selectedSkills: { id: string; name: string; level: number; category: string }[];
+  summary: string;
+  strengths: string[];
+  skillGaps: string[];
   phases: RoadmapPhase[];
-  overallProgress: number;
+  nextActions: string[];
   generatedAt: string;
+  generatedBy: RoadmapGenerator;
 };
 
-const phaseTemplates = [
-  {
-    id: "phase-1",
-    title: "Phase 1: Build your foundation",
-    description: "Refresh the fundamentals and close the fastest skill gaps for your target role.",
-    focus: "Foundational knowledge",
-  },
-  {
-    id: "phase-2",
-    title: "Phase 2: Strengthen core role skills",
-    description: "Move into the most relevant role-specific topics and practice with guided courses.",
-    focus: "Core capability",
-  },
-  {
-    id: "phase-3",
-    title: "Phase 3: Apply and showcase",
-    description: "Complete advanced resources, polish projects, and turn learning into portfolio evidence.",
-    focus: "Portfolio readiness",
-  },
-];
-
-function average(values: number[]) {
-  if (values.length === 0) return 0;
-
-  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
-}
-
-function courseProgress(course: CourseWithSkill) {
-  const savedProgress = course.progress[0];
-  const progress = savedProgress ? Number(savedProgress.progress) : 0;
-
-  return {
-    progress,
-    completed: savedProgress?.completed || progress === 100,
-  };
-}
-
-function normalizeRoadmap(roadmap: Prisma.JsonValue | null, progressByCourseId: Map<string, { progress: number; completed: boolean }>) {
-  if (!roadmap || typeof roadmap !== "object" || Array.isArray(roadmap)) return null;
-
-  const data = roadmap as unknown as Roadmap;
-  const phases = Array.isArray(data.phases) ? data.phases.map((phase) => {
-    const courses = Array.isArray(phase.courses) ? phase.courses.map((course) => {
-      const savedProgress = progressByCourseId.get(course.id);
-
-      return {
-        ...course,
-        progress: savedProgress?.progress ?? course.progress ?? 0,
-        completed: savedProgress?.completed ?? course.completed ?? false,
-      };
-    }) : [];
-
-    return {
-      ...phase,
-      courses,
-      progress: average(courses.map((course) => course.progress)),
-    };
-  }) : [];
-
-  return {
-    ...data,
-    phases,
-    overallProgress: average(phases.flatMap((phase) => phase.courses.map((course) => course.progress))),
-  };
-}
-
-function assignPhaseIndex(course: CourseWithSkill, selectedSkillLevels: Map<string, number>, index: number) {
-  const skillLevel = selectedSkillLevels.get(course.skill.id) || 1;
-
-  if (skillLevel <= 1) return 0;
-  if (skillLevel <= 3) return index % 2 === 0 ? 1 : 0;
-  return index % 2 === 0 ? 2 : 1;
-}
-
-function assembleRoadmap({
-  careerGoal,
-  experienceLevel,
-  selectedSkills,
-  courses,
-}: {
-  careerGoal: string;
+type RoadmapInput = {
+  name: string;
+  bio: string;
+  education: string;
   experienceLevel: string;
-  selectedSkills: { skillId: string; level: number; skill: { id: string; name: string; category: { name: string } | null } }[];
-  courses: CourseWithSkill[];
-}): Roadmap {
-  const selectedSkillLevels = new Map(selectedSkills.map((userSkill) => [userSkill.skillId, userSkill.level]));
-  const phases = phaseTemplates.map((phase) => ({ ...phase, courses: [] as RoadmapCourse[], progress: 0 }));
+  careerGoal: string;
+  selectedSkills: string[];
+  skillGaps: string[];
+  courses: CourseSnapshot[];
+};
 
-  courses.forEach((course, index) => {
-    const phaseIndex = assignPhaseIndex(course, selectedSkillLevels, index);
-    const savedProgress = courseProgress(course);
+type AiRoadmapPhase = Omit<RoadmapPhase, "courses"> & {
+  courseIds: string[];
+};
 
-    phases[phaseIndex].courses.push({
-      id: course.id,
-      title: course.title,
-      provider: course.provider,
-      url: course.url,
-      skill: course.skill.name,
-      category: course.skill.category?.name || "Career skill",
-      progress: savedProgress.progress,
-      completed: savedProgress.completed,
-    });
-  });
+type AiRoadmapDraft = Omit<RoadmapContent, "phases" | "generatedAt" | "generatedBy"> & {
+  phases: AiRoadmapPhase[];
+};
 
-  phases.forEach((phase, index) => {
-    if (phase.courses.length === 0) {
-      const fallbackCourse = courses[index % Math.max(courses.length, 1)];
+const roadmapJsonSchema = {
+  name: "career_roadmap",
+  strict: true,
+  schema: {
+    type: "object",
+    additionalProperties: false,
+    required: [
+      "targetRole",
+      "experienceLevel",
+      "summary",
+      "strengths",
+      "skillGaps",
+      "phases",
+      "nextActions",
+    ],
+    properties: {
+      targetRole: { type: "string" },
+      experienceLevel: { type: "string" },
+      summary: { type: "string" },
+      strengths: {
+        type: "array",
+        items: { type: "string" },
+      },
+      skillGaps: {
+        type: "array",
+        items: { type: "string" },
+      },
+      phases: {
+        type: "array",
+        minItems: 3,
+        maxItems: 3,
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["title", "timeframe", "focus", "goals", "milestones", "courseIds"],
+          properties: {
+            title: { type: "string" },
+            timeframe: { type: "string" },
+            focus: { type: "string" },
+            goals: {
+              type: "array",
+              minItems: 3,
+              maxItems: 4,
+              items: { type: "string" },
+            },
+            milestones: {
+              type: "array",
+              minItems: 3,
+              maxItems: 4,
+              items: { type: "string" },
+            },
+            courseIds: {
+              type: "array",
+              minItems: 0,
+              maxItems: 4,
+              items: { type: "string" },
+            },
+          },
+        },
+      },
+      nextActions: {
+        type: "array",
+        minItems: 3,
+        maxItems: 5,
+        items: { type: "string" },
+      },
+    },
+  },
+} as const;
 
-      if (fallbackCourse) {
-        const savedProgress = courseProgress(fallbackCourse);
+function asRoadmapContent(value: Prisma.JsonValue | null): RoadmapContent | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
 
-        phase.courses.push({
-          id: fallbackCourse.id,
-          title: fallbackCourse.title,
-          provider: fallbackCourse.provider,
-          url: fallbackCourse.url,
-          skill: fallbackCourse.skill.name,
-          category: fallbackCourse.skill.category?.name || "Career skill",
-          progress: savedProgress.progress,
-          completed: savedProgress.completed,
-        });
-      }
+  const candidate = value as Partial<RoadmapContent>;
+
+  if (!candidate.targetRole || !Array.isArray(candidate.phases)) return null;
+
+  return {
+    ...candidate,
+    generatedBy: candidate.generatedBy || "Template fallback",
+  } as RoadmapContent;
+}
+
+function formatRoadmapResponse(record: {
+  id: string;
+  progress: Prisma.Decimal;
+  updatedAt: Date;
+  careerPath: {
+    id: string;
+    title: string;
+    description: string | null;
+    roadmap: Prisma.JsonValue | null;
+    updatedAt: Date;
+  };
+}) {
+  return {
+    id: record.id,
+    careerPathId: record.careerPath.id,
+    title: record.careerPath.title,
+    description: record.careerPath.description || "",
+    progress: Number(record.progress),
+    updatedAt: record.updatedAt,
+    roadmap: asRoadmapContent(record.careerPath.roadmap),
+  };
+}
+
+function uniqueValues(values: string[]) {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+function buildSkillGaps(targetRole: string, selectedSkills: string[], catalogSkills: string[]) {
+  const normalizedTarget = targetRole.toLowerCase();
+  const selected = new Set(selectedSkills.map((skill) => skill.toLowerCase()));
+
+  const roleHints = [
+    normalizedTarget.includes("front") ? ["JavaScript", "TypeScript", "React", "Next.js", "UI Design"] : [],
+    normalizedTarget.includes("backend") || normalizedTarget.includes("api") ? ["Node.js", "Express.js", "SQL", "Docker"] : [],
+    normalizedTarget.includes("full") ? ["JavaScript", "TypeScript", "React", "Next.js", "Node.js", "SQL"] : [],
+    normalizedTarget.includes("data") ? ["Python", "SQL", "Data Analysis", "Machine Learning"] : [],
+    normalizedTarget.includes("devops") || normalizedTarget.includes("cloud") ? ["Docker", "Kubernetes", "AWS", "CI/CD"] : [],
+    normalizedTarget.includes("mobile") ? ["React Native", "Flutter", "JavaScript"] : [],
+    normalizedTarget.includes("design") || normalizedTarget.includes("ux") ? ["UI Design", "UX Design", "Figma"] : [],
+  ].flat();
+
+  const fallback = catalogSkills.slice(0, 6);
+  const desiredSkills = uniqueValues(roleHints.length ? roleHints : fallback);
+  const gaps = desiredSkills.filter((skill) => !selected.has(skill.toLowerCase()));
+
+  return gaps.slice(0, 6);
+}
+
+function buildTemplateRoadmap(input: RoadmapInput): RoadmapContent {
+  const targetRole = input.careerGoal || "Career-ready technology role";
+  const experienceLevel = input.experienceLevel || "Not specified";
+  const strengths = input.selectedSkills.slice(0, 8);
+  const skillGaps = input.skillGaps.length ? input.skillGaps : input.courses.map((course) => course.skill).slice(0, 4);
+  const coursesByPriority = [...input.courses].sort((a, b) => a.progress - b.progress);
+
+  const phases: RoadmapPhase[] = [
+    {
+      title: "Foundation Sprint",
+      timeframe: "Days 1-30",
+      focus: "Clarify your goal, close core gaps, and build consistent practice habits.",
+      goals: [
+        `Refine your ${targetRole} learning goal into 2-3 portfolio outcomes.`,
+        strengths.length
+          ? `Use your current strengths in ${strengths.slice(0, 3).join(", ")} as leverage.`
+          : "Select your current skills so future roadmaps can become more personalized.",
+        skillGaps.length
+          ? `Start with the highest-priority gap: ${skillGaps[0]}.`
+          : "Complete one beginner-friendly course connected to your goal.",
+      ],
+      milestones: [
+        "Create a weekly study calendar with at least 4 focused sessions.",
+        "Finish one course module or equivalent guided project.",
+        "Write a short progress note describing what became easier this month.",
+      ],
+      courses: coursesByPriority.slice(0, 3),
+    },
+    {
+      title: "Project Builder",
+      timeframe: "Days 31-60",
+      focus: "Turn learning into proof by shipping a focused project.",
+      goals: [
+        `Build a project that demonstrates ${targetRole} readiness.`,
+        skillGaps[1]
+          ? `Add deliberate practice around ${skillGaps[1]}.`
+          : "Deepen the strongest skill from your selected skill list.",
+        "Document decisions, tradeoffs, and blockers like a real workplace handoff.",
+      ],
+      milestones: [
+        "Publish a project README with screenshots, setup steps, and learning notes.",
+        "Ask for feedback from one peer, mentor, or community channel.",
+        "Update course progress for every resource used during the build.",
+      ],
+      courses: coursesByPriority.slice(3, 6),
+    },
+    {
+      title: "Career Launch",
+      timeframe: "Days 61-90",
+      focus: "Package your skills into a role-ready story and interview plan.",
+      goals: [
+        "Polish your portfolio, profile summary, and project explanations.",
+        skillGaps[2]
+          ? `Create a small practice task around ${skillGaps[2]} to reduce interview risk.`
+          : "Practice explaining your strongest project from problem to outcome.",
+        "Prepare a weekly application and networking routine.",
+      ],
+      milestones: [
+        "Record 5 mock interview answers using the STAR format.",
+        "Create a target-company list and tailor your learning proof to it.",
+        "Reach 80%+ completion on the most relevant recommended course.",
+      ],
+      courses: coursesByPriority.slice(6, 9),
+    },
+  ];
+
+  return {
+    targetRole,
+    experienceLevel,
+    summary: `${input.name}, this roadmap uses your profile${input.education ? `, ${input.education} background` : ""}${input.bio ? ", bio" : ""}, selected skills, and saved course progress to create a practical 90-day path toward ${targetRole}.`,
+    strengths,
+    skillGaps,
+    phases,
+    nextActions: [
+      "Save or update your profile goal before regenerating the roadmap.",
+      "Select skills you already have and skills you want to grow.",
+      "Start the first recommended course and update progress from the Courses page.",
+    ],
+    generatedAt: new Date().toISOString(),
+    generatedBy: "Template fallback",
+  };
+}
+
+function isStringArray(value: unknown) {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function hydrateAiRoadmap(draft: Partial<AiRoadmapDraft>, input: RoadmapInput) {
+  if (
+    typeof draft.targetRole !== "string" ||
+    typeof draft.experienceLevel !== "string" ||
+    typeof draft.summary !== "string" ||
+    !isStringArray(draft.strengths) ||
+    !isStringArray(draft.skillGaps) ||
+    !isStringArray(draft.nextActions) ||
+    !Array.isArray(draft.phases)
+  ) {
+    return null;
+  }
+
+  const coursesById = new Map(input.courses.map((course) => [course.id, course]));
+  const fallbackCourses = [...input.courses].sort((a, b) => a.progress - b.progress);
+
+  const phases = draft.phases.slice(0, 3).map((phase, index) => {
+    if (
+      typeof phase.title !== "string" ||
+      typeof phase.timeframe !== "string" ||
+      typeof phase.focus !== "string" ||
+      !isStringArray(phase.goals) ||
+      !isStringArray(phase.milestones) ||
+      !isStringArray(phase.courseIds)
+    ) {
+      return null;
     }
 
-    phase.progress = average(phase.courses.map((course) => course.progress));
+    const aiCourses = uniqueValues(phase.courseIds)
+      .map((courseId) => coursesById.get(courseId))
+      .filter((course): course is CourseSnapshot => Boolean(course));
+
+    return {
+      title: phase.title,
+      timeframe: phase.timeframe,
+      focus: phase.focus,
+      goals: phase.goals.slice(0, 4),
+      milestones: phase.milestones.slice(0, 4),
+      courses: aiCourses.length ? aiCourses : fallbackCourses.slice(index * 3, index * 3 + 3),
+    } satisfies RoadmapPhase;
   });
 
+  if (phases.some((phase) => !phase)) return null;
+
   return {
-    title: `${careerGoal} roadmap`,
-    description: `A personalized ${experienceLevel.toLowerCase()} learning path built from your profile, selected skills, recommended courses, and saved course progress.`,
-    careerGoal,
-    experienceLevel,
-    selectedSkills: selectedSkills.map((userSkill) => ({
-      id: userSkill.skill.id,
-      name: userSkill.skill.name,
-      level: userSkill.level,
-      category: userSkill.skill.category?.name || "Career skill",
-    })),
-    phases,
-    overallProgress: average(phases.flatMap((phase) => phase.courses.map((course) => course.progress))),
+    targetRole: draft.targetRole,
+    experienceLevel: draft.experienceLevel,
+    summary: draft.summary,
+    strengths: draft.strengths.slice(0, 8),
+    skillGaps: draft.skillGaps.slice(0, 8),
+    phases: phases as RoadmapPhase[],
+    nextActions: draft.nextActions.slice(0, 5),
     generatedAt: new Date().toISOString(),
-  };
+    generatedBy: "AI",
+  } satisfies RoadmapContent;
 }
 
-async function getLatestUserCareerPath(userId: string) {
+function buildAiPrompt(input: RoadmapInput) {
+  return `Create a personalized 90-day AI career roadmap for this user.
+
+Use all available product data:
+- Profile: name, bio, education, experience level, and career goal.
+- Skills: selected skill names are current strengths.
+- Courses: choose only from the provided courses by exact id.
+- Progress: use course progress to avoid over-prioritizing completed courses.
+
+Rules:
+- Return exactly three phases: Days 1-30, Days 31-60, Days 61-90.
+- Make the plan practical for a career mentor app, not generic.
+- courseIds must only contain ids from the provided course list.
+- If profile data is sparse, include a next action telling the user to improve it.
+
+User and learning data:
+${JSON.stringify(input, null, 2)}`;
+}
+
+async function generateAiRoadmap(input: RoadmapInput) {
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) return null;
+
+  const client = new OpenAI({ apiKey });
+  const response = await client.responses.create({
+    model: process.env.OPENAI_ROADMAP_MODEL || "gpt-4.1-mini",
+    input: [
+      {
+        role: "system",
+        content: "You are an expert career mentor. Generate concise, structured career roadmaps as valid JSON.",
+      },
+      {
+        role: "user",
+        content: buildAiPrompt(input),
+      },
+    ],
+    text: {
+      format: {
+        type: "json_schema",
+        ...roadmapJsonSchema,
+      },
+    },
+  });
+
+  const parsed = JSON.parse(response.output_text) as Partial<AiRoadmapDraft>;
+
+  return hydrateAiRoadmap(parsed, input);
+}
+
+async function getLatestRoadmap(userId: string) {
   return prisma.userCareerPath.findFirst({
     where: { userId },
-    include: { careerPath: true },
-    orderBy: { updatedAt: "desc" },
+    include: {
+      careerPath: true,
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
   });
 }
 
@@ -207,40 +398,15 @@ export async function GET() {
     const { userId, error } = await requireUser();
     if (error) return error;
 
-    const latest = await getLatestUserCareerPath(userId);
+    const roadmap = await getLatestRoadmap(userId);
 
-    if (!latest) {
+    if (!roadmap) {
       return NextResponse.json({ success: true, data: null });
     }
 
-    const progressRecords = await prisma.userProgress.findMany({
-      where: { userId },
-      select: {
-        courseId: true,
-        progress: true,
-        completed: true,
-      },
-    });
-    const progressByCourseId = new Map(progressRecords.map((record) => [
-      record.courseId,
-      { progress: Number(record.progress), completed: record.completed },
-    ]));
-    const roadmap = normalizeRoadmap(latest.careerPath.roadmap, progressByCourseId);
-
     return NextResponse.json({
       success: true,
-      data: {
-        id: latest.id,
-        progress: Number(latest.progress),
-        createdAt: latest.createdAt,
-        updatedAt: latest.updatedAt,
-        careerPath: {
-          id: latest.careerPath.id,
-          title: latest.careerPath.title,
-          description: latest.careerPath.description,
-          roadmap,
-        },
-      },
+      data: formatRoadmapResponse(roadmap),
     });
   } catch (error) {
     console.error("GET ROADMAP ERROR:", error);
@@ -264,42 +430,56 @@ export async function POST() {
         skills: {
           include: {
             skill: {
-              include: { category: true },
+              include: {
+                category: true,
+              },
             },
           },
-          orderBy: { updatedAt: "desc" },
+          orderBy: {
+            updatedAt: "desc",
+          },
         },
+        progress: true,
       },
     });
 
     if (!user) {
-      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
     }
 
-    const careerGoal = user.profile?.careerGoal?.trim() || "Career Growth";
-    const experienceLevel = user.profile?.experienceLevel?.trim() || "Beginner";
     const selectedSkillIds = user.skills.map((userSkill) => userSkill.skillId);
+    const selectedSkillNames = user.skills.map((userSkill) => userSkill.skill.name);
+    const catalogSkills = await prisma.skill.findMany({
+      orderBy: { name: "asc" },
+      select: { name: true },
+    });
+    const skillGaps = buildSkillGaps(
+      user.profile?.careerGoal || "",
+      selectedSkillNames,
+      catalogSkills.map((skill) => skill.name)
+    );
 
-    const goalTerms = careerGoal
-      .toLowerCase()
-      .split(/[^a-z0-9+#]+/i)
-      .filter((term) => term.length > 2);
+    const desiredSkillNames = uniqueValues([...selectedSkillNames, ...skillGaps]);
+    const courseFilters: Prisma.CourseWhereInput[] = [];
+
+    if (selectedSkillIds.length) {
+      courseFilters.push({ skillId: { in: selectedSkillIds } });
+    }
+
+    if (desiredSkillNames.length) {
+      courseFilters.push({ skill: { name: { in: desiredSkillNames } } });
+    }
 
     const courses = await prisma.course.findMany({
-      where: selectedSkillIds.length > 0 ? {
-        skillId: { in: selectedSkillIds },
-      } : goalTerms.length > 0 ? {
-        OR: goalTerms.flatMap((term) => [
-          { title: { contains: term, mode: "insensitive" as const } },
-          { skill: { name: { contains: term, mode: "insensitive" as const } } },
-          { skill: { category: { name: { contains: term, mode: "insensitive" as const } } } },
-        ]),
-      } : undefined,
+      where: courseFilters.length ? { OR: courseFilters } : undefined,
       include: {
-        skill: { include: { category: true } },
-        progress: {
-          where: { userId },
-          select: { progress: true, completed: true },
+        skill: {
+          include: {
+            category: true,
+          },
         },
       },
       orderBy: [
@@ -309,57 +489,83 @@ export async function POST() {
       take: 12,
     });
 
-    if (courses.length === 0) {
-      return NextResponse.json(
-        { success: false, error: "Select skills or seed courses before generating a roadmap" },
-        { status: 400 }
-      );
+    const progressMap = new Map(
+      user.progress.map((record) => [record.courseId, Number(record.progress)])
+    );
+
+    const courseSnapshots = courses.map((course) => ({
+      id: course.id,
+      title: course.title,
+      provider: course.provider,
+      url: course.url,
+      skill: course.skill.name,
+      category: course.skill.category?.name || "Career skill",
+      progress: progressMap.get(course.id) || 0,
+    }));
+
+    const roadmapInput: RoadmapInput = {
+      name: user.name,
+      bio: user.profile?.bio || "",
+      education: user.profile?.education || "",
+      experienceLevel: user.profile?.experienceLevel || "",
+      careerGoal: user.profile?.careerGoal || "",
+      selectedSkills: selectedSkillNames,
+      skillGaps,
+      courses: courseSnapshots,
+    };
+
+    let roadmapContent = buildTemplateRoadmap(roadmapInput);
+
+    try {
+      roadmapContent = (await generateAiRoadmap(roadmapInput)) || roadmapContent;
+    } catch (error) {
+      console.error("AI ROADMAP ERROR:", error);
     }
 
-    const roadmap = assembleRoadmap({
-      careerGoal,
-      experienceLevel,
-      selectedSkills: user.skills,
-      courses,
+    const recommendedCourses = roadmapContent.phases.flatMap((phase) => phase.courses);
+    const completedCourses = recommendedCourses.filter((course) => course.progress >= 100).length;
+    const progress = recommendedCourses.length
+      ? Math.round((completedCourses / recommendedCourses.length) * 100)
+      : 0;
+    const title = `${roadmapContent.targetRole} Roadmap - ${user.id}`;
+
+    const careerPath = await prisma.careerPath.upsert({
+      where: { title },
+      update: {
+        description: roadmapContent.summary,
+        roadmap: roadmapContent as Prisma.InputJsonValue,
+      },
+      create: {
+        title,
+        description: roadmapContent.summary,
+        roadmap: roadmapContent as Prisma.InputJsonValue,
+      },
     });
-    const careerPathTitle = `${careerGoal} roadmap - ${userId.slice(0, 8)} - ${Date.now()}`;
 
-    const saved = await prisma.$transaction(async (tx) => {
-      const careerPath = await tx.careerPath.create({
-        data: {
-          title: careerPathTitle,
-          description: roadmap.description,
-          roadmap: roadmap as unknown as Prisma.InputJsonValue,
-        },
-      });
-
-      return tx.userCareerPath.create({
-        data: {
+    const userCareerPath = await prisma.userCareerPath.upsert({
+      where: {
+        userId_careerPathId: {
           userId,
           careerPathId: careerPath.id,
-          progress: roadmap.overallProgress,
         },
-        include: { careerPath: true },
-      });
+      },
+      update: { progress },
+      create: {
+        userId,
+        careerPathId: careerPath.id,
+        progress,
+      },
+      include: {
+        careerPath: true,
+      },
     });
 
     return NextResponse.json({
       success: true,
-      data: {
-        id: saved.id,
-        progress: Number(saved.progress),
-        createdAt: saved.createdAt,
-        updatedAt: saved.updatedAt,
-        careerPath: {
-          id: saved.careerPath.id,
-          title: saved.careerPath.title,
-          description: saved.careerPath.description,
-          roadmap,
-        },
-      },
+      data: formatRoadmapResponse(userCareerPath),
     });
   } catch (error) {
-    console.error("SAVE ROADMAP ERROR:", error);
+    console.error("GENERATE ROADMAP ERROR:", error);
 
     return NextResponse.json(
       { success: false, error: "Failed to generate roadmap" },
