@@ -75,21 +75,24 @@ CREATE DATABASE career_mentor;
 ## ⚙️ 5. Run Prisma Migrations
 
 ```bash
-npx prisma migrate dev
+npm run db:migrate
 ```
 
 👉 This will:
 
 * Create all tables
 * Sync database with schema
+* Regenerate the Prisma Client for the current schema
 
 ---
 
 ## 🧠 6. Generate Prisma Client
 
 ```bash
-npx prisma generate
+npm run prisma:generate
 ```
+
+`npm run dev` and `npm run build` also run Prisma Client generation first, so local development picks up schema-only changes like new model fields.
 
 ---
 
@@ -122,7 +125,8 @@ npm run dev
 * After pulling schema changes, run:
 
   ```bash
-  npx prisma migrate dev
+  npm run db:migrate
+  npm run prisma:generate
   ```
 
 ---
@@ -143,7 +147,23 @@ npx prisma migrate dev
 ### ❌ Prisma issues
 
 ```bash
-npx prisma generate
+npm run prisma:generate
+```
+
+### ❌ `Unknown argument isLocked`
+
+This means the generated Prisma Client is older than `prisma/schema.prisma`. The admin account-locking change added `User.isLocked`, so regenerate the client and apply the migration before restarting Next.js:
+
+```bash
+npm run db:migrate
+npm run prisma:generate
+npm run dev
+```
+
+For deployed environments, apply committed migrations with:
+
+```bash
+npm run db:deploy
 ```
 
 ---
