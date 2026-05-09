@@ -7,6 +7,7 @@ import { useState } from "react";
 const navItems = [
   { name: "Dashboard", path: "/dashboard" },
   { name: "Roadmap", path: "/dashboard/roadmap" },
+  { name: "AI Mentor", path: "/dashboard/ai-chat" },
   { name: "Skills", path: "/dashboard/skills" },
   { name: "Profile", path: "/dashboard/profile" },
 ];
