@@ -44,6 +44,8 @@ model User {
   recommendations   AiRecommendation[]
   progress          UserProgress[]
   resumes           Resume[]
+  jobMatches        JobMatch[]
+  interviewPreps    InterviewPrep[]
   passwordResetTokens PasswordResetToken[]
 
   @@index([createdAt])
@@ -294,4 +296,44 @@ model Resume {
 
   @@index([userId])
   @@map("resumes")
+}
+
+//////////////////////
+// AI JOB MATCHING
+//////////////////////
+
+model JobMatch {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+
+  targetRole     String   @map("target_role")
+  jobDescription String?  @map("job_description")
+  result         Json
+
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("job_matches")
+}
+
+//////////////////////
+// AI INTERVIEW PREP
+//////////////////////
+
+model InterviewPrep {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+
+  targetRole     String   @map("target_role")
+  interviewType  String   @map("interview_type")
+  result         Json
+
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("interview_preps")
 }

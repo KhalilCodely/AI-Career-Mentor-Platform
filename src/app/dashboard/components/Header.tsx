@@ -9,6 +9,8 @@ const navItems = [
   { name: "Dashboard", path: "/dashboard" },
   { name: "Roadmap", path: "/dashboard/roadmap" },
   { name: "AI Mentor", path: "/dashboard/ai-chat" },
+  { name: "Job Matching", path: "/dashboard/job-matching" },
+  { name: "Interview Prep", path: "/dashboard/interview-prep" },
   { name: "Skills", path: "/dashboard/skills" },
   { name: "Profile", path: "/dashboard/profile" },
 ];

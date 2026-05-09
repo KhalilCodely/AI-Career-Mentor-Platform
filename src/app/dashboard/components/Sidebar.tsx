@@ -6,6 +6,7 @@ import {
   BookOpen,
   Bot,
   Brain,
+  BriefcaseBusiness,
   FileText,
   ChevronLeft,
   LayoutDashboard,
@@ -13,6 +14,7 @@ import {
   Map,
   Milestone,
   Menu,
+  Mic,
   User,
 } from "lucide-react";
 import BrandLogo from "@/components/BrandLogo";
@@ -24,6 +26,8 @@ const navSections = [
       { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
       { name: "Roadmap", icon: Map, path: "/dashboard/roadmap" },
       { name: "AI Chat Mentor", icon: Bot, path: "/dashboard/ai-chat" },
+      { name: "Job Matching", icon: BriefcaseBusiness, path: "/dashboard/job-matching" },
+      { name: "Interview Prep", icon: Mic, path: "/dashboard/interview-prep" },
       { name: "Career Paths", icon: Milestone, path: "/dashboard/career-paths" },
     ],
   },
