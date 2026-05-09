@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpen,
+  Bot,
   Brain,
   FileText,
   ChevronLeft,
@@ -22,6 +23,7 @@ const navSections = [
     items: [
       { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
       { name: "Roadmap", icon: Map, path: "/dashboard/roadmap" },
+      { name: "AI Chat Mentor", icon: Bot, path: "/dashboard/ai-chat" },
       { name: "Career Paths", icon: Milestone, path: "/dashboard/career-paths" },
     ],
   },
@@ -175,7 +177,7 @@ export default function Sidebar() {
       </aside>
 
       <nav className="fixed inset-x-3 bottom-3 z-50 rounded-[1.75rem] border border-gray-200 bg-white/95 p-2 shadow-2xl shadow-gray-950/15 backdrop-blur md:hidden">
-        <div className="grid grid-cols-6 gap-1">
+        <div className="grid grid-cols-4 gap-1">
           {mobileNavItems.map((item) => {
             const isActive =
               pathname === item.path ||

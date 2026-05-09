@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Brain, FileText, Map, Milestone, Sparkles, User } from "lucide-react";
+import { BookOpen, Bot, Brain, FileText, Map, Milestone, Sparkles, User } from "lucide-react";
 
 const cards = [
   {
@@ -15,6 +15,13 @@ const cards = [
     href: "/dashboard/roadmap",
     icon: Map,
     tone: "from-blue-500 to-cyan-500",
+  },
+  {
+    title: "AI Chat Mentor",
+    description: "Ask a mentor that uses your profile, skills, courses, progress, and chat history for tailored advice.",
+    href: "/dashboard/ai-chat",
+    icon: Bot,
+    tone: "from-fuchsia-500 to-indigo-500",
   },
   {
     title: "Courses",
@@ -59,7 +66,7 @@ export default function Dashboard() {
             </div>
             <h1 className="text-3xl font-bold tracking-tight md:text-5xl">Choose a path, build skills, and track progress.</h1>
             <p className="mt-4 text-sm leading-6 text-slate-200 md:text-base">
-              Start with a seeded career path, then use AI roadmap generation, resume checking, and course progress tracking to turn your goal into a practical learning plan.
+              Start with a seeded career path, then use AI chat mentoring, roadmap generation, resume checking, and course progress tracking to turn your goal into a practical learning plan.
             </p>
           </div>
         </div>
