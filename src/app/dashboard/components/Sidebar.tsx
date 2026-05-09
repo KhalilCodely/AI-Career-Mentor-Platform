@@ -13,9 +13,9 @@ import {
   Map,
   Milestone,
   Menu,
-  Sparkles,
   User,
 } from "lucide-react";
+import BrandLogo from "@/components/BrandLogo";
 
 const navSections = [
   {
@@ -60,37 +60,31 @@ export default function Sidebar() {
   return (
     <>
       <aside
-        className={`sticky top-0 hidden h-screen shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-white/95 text-gray-900 shadow-[12px_0_40px_rgba(15,23,42,0.05)] backdrop-blur-xl transition-all duration-300 md:flex ${
+        className={`sticky top-0 hidden h-screen shrink-0 flex-col overflow-hidden border-r border-blue-100/70 bg-white/95 text-gray-900 shadow-[12px_0_40px_rgba(37,99,235,0.07)] backdrop-blur-xl transition-all duration-300 md:flex ${
           collapsed ? "w-24" : "w-72"
         }`}
       >
         <div className="relative border-b border-gray-100 p-4">
           <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
           <div className="flex items-center justify-between gap-3">
-            <button
-              onClick={() => navigateTo("/dashboard")}
-              className="group flex min-w-0 items-center gap-3 rounded-2xl text-left"
-              aria-label="Go to dashboard"
-            >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gray-950 text-white shadow-lg shadow-gray-950/10 transition group-hover:scale-105">
-                <Sparkles className="h-5 w-5" />
-              </div>
-
-              {!collapsed ? (
-                <div className="min-w-0">
-                  <p className="truncate text-base font-bold tracking-tight">
-                    Career Mentor
-                  </p>
-                  <p className="truncate text-xs font-medium text-gray-500">
-                    Growth workspace
-                  </p>
-                </div>
-              ) : null}
-            </button>
+            {collapsed ? (
+              <BrandLogo
+                href="/dashboard"
+                compact
+                iconClassName="h-11 w-11 rounded-2xl"
+                className="rounded-2xl"
+              />
+            ) : (
+              <BrandLogo
+                href="/dashboard"
+                iconClassName="h-11 w-11 rounded-2xl"
+                subtitleClassName="text-[11px] text-gray-500"
+              />
+            )}
 
             <button
               onClick={() => setCollapsed((current) => !current)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-600 transition hover:border-gray-300 hover:bg-gray-100 hover:text-gray-950"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-600 transition hover:border-gray-300 hover:bg-blue-50 hover:text-blue-700"
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {collapsed ? (
@@ -128,8 +122,8 @@ export default function Sidebar() {
                           collapsed ? "justify-center" : "gap-3"
                         } ${
                           isActive
-                            ? "bg-gray-950 text-white shadow-lg shadow-gray-950/10"
-                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-950"
+                            ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-lg shadow-blue-500/20"
+                            : "text-gray-600 hover:bg-blue-50 hover:text-blue-700"
                         }`}
                       >
                         <Icon className="h-5 w-5 shrink-0" />
@@ -148,7 +142,7 @@ export default function Sidebar() {
 
         <div className="border-t border-gray-100 p-3">
           {!collapsed ? (
-            <div className="mb-3 rounded-3xl bg-gray-50 p-4 ring-1 ring-gray-100">
+            <div className="mb-3 rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-50 p-4 ring-1 ring-blue-100">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-sm font-bold text-gray-900 ring-1 ring-gray-200">
                   U
@@ -190,8 +184,8 @@ export default function Sidebar() {
                 onClick={() => navigateTo(item.path)}
                 className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-semibold transition ${
                   isActive
-                    ? "bg-gray-950 text-white"
-                    : "text-gray-500 hover:bg-gray-100 hover:text-gray-950"
+                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                    : "text-gray-500 hover:bg-blue-50 hover:text-blue-700"
                 }`}
               >
                 <Icon className="h-5 w-5" />

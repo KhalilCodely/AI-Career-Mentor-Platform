@@ -57,17 +57,26 @@ const cards = [
 export default function Dashboard() {
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 p-6 text-white shadow-xl md:p-8">
-        <div className="relative">
+      <section className="overflow-hidden rounded-[2rem] border border-white/20 bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 p-6 text-white shadow-2xl shadow-blue-950/20 md:p-8">
+        <div className="relative grid gap-8 lg:grid-cols-[1fr_320px] lg:items-end">
           <div className="absolute -right-8 -top-8 h-56 w-56 rounded-full bg-cyan-400/20 blur-3xl" />
+          <div className="absolute -bottom-20 left-1/3 h-64 w-64 rounded-full bg-purple-500/20 blur-3xl" />
           <div className="relative max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-sm text-blue-100">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-sm text-blue-100 shadow-lg shadow-black/10 backdrop-blur">
               <Sparkles size={16} /> Career Mentor workspace
             </div>
             <h1 className="text-3xl font-bold tracking-tight md:text-5xl">Choose a path, build skills, and track progress.</h1>
             <p className="mt-4 text-sm leading-6 text-slate-200 md:text-base">
               Start with a seeded career path, then use AI chat mentoring, roadmap generation, resume checking, and course progress tracking to turn your goal into a practical learning plan.
             </p>
+          </div>
+          <div className="relative grid gap-3 rounded-3xl border border-white/10 bg-white/10 p-4 text-sm shadow-xl shadow-black/10 backdrop-blur">
+            {["Roadmap ready", "AI mentor online", "Skills syncing"].map((item) => (
+              <div key={item} className="flex items-center justify-between rounded-2xl bg-white/10 px-4 py-3 font-semibold text-blue-50">
+                <span>{item}</span>
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.8)]" />
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -80,9 +89,9 @@ export default function Dashboard() {
             <Link
               key={card.title}
               href={card.href}
-              className="group rounded-3xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+              className="group rounded-3xl border border-blue-100/70 bg-white/95 p-5 shadow-sm shadow-blue-950/5 transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-950/10"
             >
-              <div className={`mb-5 flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br ${card.tone} text-white shadow-lg`}>
+              <div className={`mb-5 flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br ${card.tone} text-white shadow-lg shadow-blue-500/20 transition group-hover:scale-105`}>
                 <Icon size={24} />
               </div>
               <h2 className="text-xl font-bold text-slate-950 transition group-hover:text-blue-700">{card.title}</h2>
