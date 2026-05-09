@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck, User } from "lucide-react";
-import BrandLogo from "@/components/BrandLogo";
 import { useMemo, useState } from "react";
 
 export default function RegisterPage() {
@@ -99,11 +98,12 @@ export default function RegisterPage() {
           <div className="absolute -right-16 top-10 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
           <div className="absolute -bottom-20 left-6 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
           <div className="relative">
-            <BrandLogo
-              className="mb-10 rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur"
-              titleClassName="text-lg"
-              subtitleClassName="text-[11px] text-cyan-100"
-            />
+            <Link
+              href="/"
+              className="mb-10 inline-flex rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-bold tracking-tight text-white backdrop-blur transition hover:bg-white/15"
+            >
+              Career Mentor
+            </Link>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-cyan-100">
               <ShieldCheck className="h-4 w-4" />
               Start strong
@@ -127,7 +127,12 @@ export default function RegisterPage() {
         <div className="bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] p-6 sm:p-8 lg:p-10">
           <div className="mx-auto max-w-md">
             <div className="mb-8 flex items-center justify-between gap-4">
-              <BrandLogo />
+              <Link
+                href="/"
+                className="text-lg font-extrabold tracking-tight text-slate-950 transition hover:text-blue-700"
+              >
+                Career Mentor
+              </Link>
               <Link href="/" className="rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
                 Home
               </Link>

@@ -2,7 +2,6 @@
 
 import { Bell, ChevronDown, LogOut, Menu, Search } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import BrandLogo from "@/components/BrandLogo";
 import { useState } from "react";
 
 const navItems = [
@@ -46,12 +45,12 @@ export default function Header() {
             <Menu className="h-5 w-5" />
           </button>
 
-          <BrandLogo
-            href="/dashboard"
-            compact
-            iconClassName="h-11 w-11 rounded-2xl"
-            className="md:hidden"
-          />
+          <button
+            onClick={() => navigateTo("/dashboard")}
+            className="rounded-full border border-gray-200 bg-white px-3 py-2 text-sm font-extrabold tracking-tight text-slate-950 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 md:hidden"
+          >
+            Career Mentor
+          </button>
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">

@@ -15,7 +15,6 @@ import {
   Menu,
   User,
 } from "lucide-react";
-import BrandLogo from "@/components/BrandLogo";
 
 const navSections = [
   {
@@ -67,20 +66,17 @@ export default function Sidebar() {
         <div className="relative border-b border-gray-100 p-4">
           <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
           <div className="flex items-center justify-between gap-3">
-            {collapsed ? (
-              <BrandLogo
-                href="/dashboard"
-                compact
-                iconClassName="h-11 w-11 rounded-2xl"
-                className="rounded-2xl"
-              />
-            ) : (
-              <BrandLogo
-                href="/dashboard"
-                iconClassName="h-11 w-11 rounded-2xl"
-                subtitleClassName="text-[11px] text-gray-500"
-              />
-            )}
+            <button
+              onClick={() => navigateTo("/dashboard")}
+              className={`min-w-0 text-left font-extrabold tracking-tight text-slate-950 transition hover:text-blue-700 ${
+                collapsed
+                  ? "flex h-11 w-11 items-center justify-center rounded-2xl border border-gray-200 bg-white text-sm shadow-sm"
+                  : "truncate text-xl"
+              }`}
+              title="Career Mentor"
+            >
+              {collapsed ? "CM" : "Career Mentor"}
+            </button>
 
             <button
               onClick={() => setCollapsed((current) => !current)}
