@@ -10,10 +10,13 @@ import {
   Clock3,
   Database,
   Gauge,
+  GitBranch,
+  Layers3,
   Link2,
   Loader2,
   Map,
   RefreshCw,
+  ShieldCheck,
   Sparkles,
   Target,
   Trophy,
@@ -64,6 +67,15 @@ type Roadmap = {
   };
   weeklyCommitment?: string;
   successMetrics?: string[];
+  architectureBrief?: {
+    northStar: string;
+    targetRoleSystem: string;
+    capabilityStack: string[];
+    portfolioArtifact: string;
+  };
+  deliveryCadence?: string[];
+  risks?: { risk: string; mitigation: string }[];
+  validationGates?: string[];
 };
 
 type RoadmapResponse = {
@@ -224,7 +236,7 @@ export default function RoadmapPage() {
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-sm text-blue-100 backdrop-blur">
-                <Map size={16} /> AI Roadmap · profile + skills + courses + progress
+                <Map size={16} /> AI Roadmap · architected from profile + skills + courses + progress
               </div>
               <h1 className="text-3xl font-bold tracking-tight md:text-5xl">
                 {roadmap ? roadmap.title : "Build your career roadmap"}
@@ -232,7 +244,7 @@ export default function RoadmapPage() {
               <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-200 md:text-base">
                 {roadmap
                   ? roadmap.description
-                  : "Generate a focused AI plan from your profile, experience level, selected skills, matching courses, and saved course progress. It works with GPT/OpenAI or Gemini API keys and keeps a local fallback for development."}
+                  : "Generate a software-architect-style AI plan from your profile, experience level, selected skills, matching courses, and saved course progress. It adds capability stacks, delivery cadence, risks, validation gates, and a portfolio artifact."}
               </p>
             </div>
 
@@ -304,6 +316,58 @@ export default function RoadmapPage() {
               <p className="mt-3 text-sm text-gray-500">{roadmap.aiGenerated ? "Generated with a configured AI API." : "Using the local fallback until an API key is configured."}</p>
             </div>
           </section>
+
+          {roadmap.architectureBrief && (
+            <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+              <div className="overflow-hidden rounded-[2rem] border bg-white shadow-sm">
+                <div className="border-b bg-gradient-to-r from-slate-50 to-blue-50 p-5">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-wide text-blue-700 ring-1 ring-blue-100">
+                    <Layers3 size={14} /> Software architect view
+                  </div>
+                  <h2 className="mt-3 text-2xl font-bold text-slate-950">{roadmap.architectureBrief.targetRoleSystem}</h2>
+                  <p className="mt-2 text-sm leading-6 text-gray-600">{roadmap.architectureBrief.northStar}</p>
+                </div>
+
+                <div className="grid gap-4 p-5 md:grid-cols-2">
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                      <GitBranch className="text-blue-600" size={18} /> Capability stack
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {roadmap.architectureBrief.capabilityStack.map((capability) => (
+                        <span key={capability} className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-700 ring-1 ring-slate-200">
+                          {capability}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-violet-50 p-4">
+                    <div className="flex items-center gap-2 text-sm font-bold text-violet-950">
+                      <Trophy className="text-violet-600" size={18} /> Portfolio artifact
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-violet-900">{roadmap.architectureBrief.portfolioArtifact}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[2rem] border bg-slate-950 p-5 text-white shadow-sm">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="text-emerald-300" size={22} />
+                  <h2 className="text-lg font-bold">Validation gates</h2>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-300">Use these checks like release criteria before moving to the next phase.</p>
+                <ul className="mt-4 space-y-3">
+                  {(roadmap.validationGates || []).map((gate) => (
+                    <li key={gate} className="flex gap-2 text-sm leading-6 text-slate-100">
+                      <CheckCircle2 className="mt-1 shrink-0 text-emerald-300" size={15} />
+                      <span>{gate}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          )}
 
           <section className="grid gap-6 xl:grid-cols-[1fr_22rem]">
             <div className="space-y-5">
@@ -409,6 +473,37 @@ export default function RoadmapPage() {
                   })}
                 </div>
               </div>
+
+              {Boolean(roadmap.deliveryCadence?.length || roadmap.risks?.length) && (
+                <div className="rounded-[2rem] border bg-white p-5 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <GitBranch className="text-indigo-600" size={20} />
+                    <h2 className="text-lg font-bold text-slate-950">Delivery operating model</h2>
+                  </div>
+
+                  {roadmap.deliveryCadence?.length ? (
+                    <ol className="mt-4 space-y-2 text-sm leading-6 text-gray-600">
+                      {roadmap.deliveryCadence.map((cadence, index) => (
+                        <li key={cadence} className="flex gap-2">
+                          <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-xs font-bold text-indigo-700">{index + 1}</span>
+                          <span>{cadence}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : null}
+
+                  {roadmap.risks?.length ? (
+                    <div className="mt-4 space-y-2">
+                      {roadmap.risks.map((risk) => (
+                        <div key={risk.risk} className="rounded-2xl bg-amber-50 p-3 text-sm leading-6 text-amber-950">
+                          <p className="font-bold">Risk: {risk.risk}</p>
+                          <p className="mt-1 text-amber-800">Mitigation: {risk.mitigation}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              )}
 
               <div className="rounded-[2rem] border bg-white p-5 shadow-sm">
                 <h2 className="text-lg font-bold text-slate-950">Success plan</h2>
