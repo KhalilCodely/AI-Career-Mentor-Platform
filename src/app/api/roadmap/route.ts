@@ -63,20 +63,40 @@ type Roadmap = {
   };
   weeklyCommitment?: string;
   successMetrics?: string[];
+  architectureBrief?: {
+    northStar: string;
+    targetRoleSystem: string;
+    capabilityStack: string[];
+    portfolioArtifact: string;
+  };
+  deliveryCadence?: string[];
+  risks?: { risk: string; mitigation: string }[];
+  validationGates?: string[];
 };
+
+type CourseNotes = { courseId?: string; why?: string; milestone?: string }[] | Record<string, { why?: string; milestone?: string }>;
 
 type AiRoadmapDraft = {
   title?: string;
   description?: string;
   weeklyCommitment?: string;
   successMetrics?: string[];
+  architectureBrief?: {
+    northStar?: string;
+    targetRoleSystem?: string;
+    capabilityStack?: string[];
+    portfolioArtifact?: string;
+  };
+  deliveryCadence?: string[];
+  risks?: { risk?: string; mitigation?: string }[];
+  validationGates?: string[];
   phases?: {
     title?: string;
     description?: string;
     focus?: string;
     outcome?: string;
     courseIds?: string[];
-    courseNotes?: Record<string, { why?: string; milestone?: string }>;
+    courseNotes?: CourseNotes;
   }[];
 };
 
@@ -89,6 +109,114 @@ type GeminiGenerateResponse = {
   candidates?: { content?: { parts?: { text?: string }[] } }[];
   error?: { message?: string };
 };
+
+
+const roadmapJsonSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["title", "description", "weeklyCommitment", "successMetrics", "architectureBrief", "deliveryCadence", "risks", "validationGates", "phases"],
+  properties: {
+    title: { type: "string" },
+    description: { type: "string" },
+    weeklyCommitment: { type: "string" },
+    successMetrics: { type: "array", minItems: 3, maxItems: 4, items: { type: "string" } },
+    architectureBrief: {
+      type: "object",
+      additionalProperties: false,
+      required: ["northStar", "targetRoleSystem", "capabilityStack", "portfolioArtifact"],
+      properties: {
+        northStar: { type: "string" },
+        targetRoleSystem: { type: "string" },
+        capabilityStack: { type: "array", minItems: 3, maxItems: 6, items: { type: "string" } },
+        portfolioArtifact: { type: "string" },
+      },
+    },
+    deliveryCadence: { type: "array", minItems: 3, maxItems: 4, items: { type: "string" } },
+    risks: {
+      type: "array",
+      minItems: 2,
+      maxItems: 3,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["risk", "mitigation"],
+        properties: {
+          risk: { type: "string" },
+          mitigation: { type: "string" },
+        },
+      },
+    },
+    validationGates: { type: "array", minItems: 3, maxItems: 4, items: { type: "string" } },
+    phases: {
+      type: "array",
+      minItems: 3,
+      maxItems: 3,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["title", "description", "focus", "outcome", "courseIds", "courseNotes"],
+        properties: {
+          title: { type: "string" },
+          description: { type: "string" },
+          focus: { type: "string" },
+          outcome: { type: "string" },
+          courseIds: { type: "array", items: { type: "string" } },
+          courseNotes: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["courseId", "why", "milestone"],
+              properties: {
+                courseId: { type: "string" },
+                why: { type: "string" },
+                milestone: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+} as const;
+
+function compactList(values: (string | undefined)[] | undefined, fallback: string[], maxItems = 4) {
+  const cleanValues = (values || [])
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value));
+
+  return (cleanValues.length > 0 ? cleanValues : fallback).slice(0, maxItems);
+}
+
+function normalizeRisks(risks: AiRoadmapDraft["risks"] | undefined, fallback: { risk: string; mitigation: string }[]) {
+  const cleanRisks = (risks || [])
+    .map((item) => ({ risk: item.risk?.trim() || "", mitigation: item.mitigation?.trim() || "" }))
+    .filter((item) => item.risk && item.mitigation);
+
+  return (cleanRisks.length > 0 ? cleanRisks : fallback).slice(0, 3);
+}
+
+function buildArchitectureBrief({
+  careerGoal,
+  experienceLevel,
+  selectedSkills,
+  draft,
+}: {
+  careerGoal: string;
+  experienceLevel: string;
+  selectedSkills: { skill: { name: string } }[];
+  draft?: AiRoadmapDraft;
+}) {
+  const topSkills = selectedSkills.map((userSkill) => userSkill.skill.name).slice(0, 5);
+  const capabilityStack = compactList(draft?.architectureBrief?.capabilityStack, topSkills.length > 0 ? topSkills : ["Core fundamentals", "Applied practice", "Portfolio evidence"], 6);
+
+  return {
+    northStar: draft?.architectureBrief?.northStar?.trim() || `Become a credible ${careerGoal} candidate by shipping measurable proof, not only finishing courses.`,
+    targetRoleSystem: draft?.architectureBrief?.targetRoleSystem?.trim() || `${experienceLevel} ${careerGoal} capability map`,
+    capabilityStack,
+    portfolioArtifact: draft?.architectureBrief?.portfolioArtifact?.trim() || `A ${careerGoal} portfolio case study that connects tools, decisions, tradeoffs, and outcomes.`,
+  };
+}
 
 const phaseTemplates = [
   {
@@ -253,6 +381,21 @@ function assembleLocalRoadmap({
       "Finish at least one phase outcome before moving forward",
       "Convert completed coursework into portfolio or interview evidence",
     ],
+    architectureBrief: buildArchitectureBrief({ careerGoal, experienceLevel, selectedSkills }),
+    deliveryCadence: [
+      "Plan: choose one outcome and supporting course module",
+      "Build: practice the skill in a small portfolio slice",
+      "Review: capture decisions, blockers, and next actions",
+    ],
+    risks: [
+      { risk: "Learning is spread across too many topics", mitigation: "Keep each week anchored to one target capability and one artifact." },
+      { risk: "Progress is not visible to recruiters or managers", mitigation: "Publish notes, demos, or case-study updates after each phase." },
+    ],
+    validationGates: [
+      "Explain the phase concept without notes",
+      "Complete the linked course milestone",
+      "Show a small working artifact or decision log",
+    ],
   };
 }
 
@@ -284,12 +427,21 @@ function buildPrompt({
   }));
 
   return JSON.stringify({
-    instruction: "Create a precise 3-phase career learning roadmap. Return only valid JSON. Use only course IDs from courseCatalog. Prioritize unfinished courses, respect current progress, and personalize from profile, selected skills, courses, and progress. Keep descriptions concise and actionable.",
+    instruction: "Create a precise 3-phase career learning roadmap like a software architect designing a delivery plan. Return only valid JSON. Use only course IDs from courseCatalog. Prioritize unfinished courses, respect current progress, and personalize from profile, selected skills, courses, and progress. Include architecture-level rationale: target system, capability stack, portfolio artifact, delivery cadence, risks, mitigations, and validation gates. Keep descriptions concise and actionable.",
     requiredJsonShape: {
       title: "string",
       description: "string",
       weeklyCommitment: "string",
       successMetrics: ["string", "string", "string"],
+      architectureBrief: {
+        northStar: "string",
+        targetRoleSystem: "string",
+        capabilityStack: ["string", "string", "string"],
+        portfolioArtifact: "string",
+      },
+      deliveryCadence: ["string", "string", "string"],
+      risks: [{ risk: "string", mitigation: "string" }],
+      validationGates: ["string", "string", "string"],
       phases: [
         {
           title: "string",
@@ -297,7 +449,7 @@ function buildPrompt({
           description: "string",
           outcome: "string",
           courseIds: ["course-id-from-catalog"],
-          courseNotes: { "course-id-from-catalog": { why: "string", milestone: "string" } },
+          courseNotes: [{ courseId: "course-id-from-catalog", why: "string", milestone: "string" }],
         },
       ],
     },
@@ -337,8 +489,15 @@ async function callOpenAiRoadmap(prompt: string) {
         { role: "system", content: "You are an expert career mentor. You only return valid JSON." },
         { role: "user", content: prompt },
       ],
-      response_format: { type: "json_object" },
-      temperature: 0.4,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "career_roadmap_architecture",
+          strict: true,
+          schema: roadmapJsonSchema,
+        },
+      },
+      temperature: 0.35,
     }),
   });
   const data = await response.json() as OpenAiChatResponse;
@@ -389,6 +548,17 @@ async function callGeminiRoadmap(prompt: string) {
   };
 }
 
+function getCourseNote(notes: CourseNotes | undefined, courseId: string) {
+  if (!notes) return undefined;
+
+  if (Array.isArray(notes)) {
+    const note = notes.find((item) => item.courseId === courseId);
+    return note ? { why: note.why, milestone: note.milestone } : undefined;
+  }
+
+  return notes[courseId];
+}
+
 function applyAiDraft({
   draft,
   courses,
@@ -419,7 +589,7 @@ function applyAiDraft({
       description: aiPhase?.description || template.description,
       focus: aiPhase?.focus || template.focus,
       outcome: aiPhase?.outcome || template.outcome,
-      courses: validCourseIds.map((id) => toRoadmapCourse(courseById.get(id) as CourseWithSkill, aiPhase?.courseNotes?.[id])),
+      courses: validCourseIds.map((id) => toRoadmapCourse(courseById.get(id) as CourseWithSkill, getCourseNote(aiPhase?.courseNotes, id))),
       progress: 0,
     };
   });
@@ -461,11 +631,26 @@ function applyAiDraft({
     aiGenerated: true,
     uses: { profile: true, skills: true, courses: true, progress: true, ai: true },
     weeklyCommitment: draft.weeklyCommitment || "6-8 focused hours per week",
-    successMetrics: Array.isArray(draft.successMetrics) ? draft.successMetrics.slice(0, 4) : [
+    successMetrics: compactList(draft.successMetrics, [
       "Complete each phase outcome before moving forward",
       "Keep course progress updated weekly",
       "Turn finished courses into portfolio evidence",
-    ],
+    ]),
+    architectureBrief: buildArchitectureBrief({ careerGoal, experienceLevel, selectedSkills, draft }),
+    deliveryCadence: compactList(draft.deliveryCadence, [
+      "Frame the week's target capability and acceptance criteria",
+      "Complete focused course work and capture design tradeoffs",
+      "Package the result into portfolio evidence or interview stories",
+    ]),
+    risks: normalizeRisks(draft.risks, [
+      { risk: "The plan becomes course completion instead of capability growth", mitigation: "Tie every course to an artifact, demo, or decision record." },
+      { risk: "Skill gaps remain hidden until interviews", mitigation: "Use each validation gate as a mock interview checkpoint." },
+    ]),
+    validationGates: compactList(draft.validationGates, [
+      "Explain the architecture-level tradeoff behind the phase",
+      "Complete the assigned course milestone",
+      "Publish or document a concrete artifact before advancing",
+    ]),
   } satisfies Roadmap;
 }
 
