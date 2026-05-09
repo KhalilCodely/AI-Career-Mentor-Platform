@@ -8,8 +8,14 @@ const Features = dynamic(() => import("./Landing Page/Features"), {
 const AiDemoChat = dynamic(() => import("./Landing Page/AiDemoChat"), {
   loading: () => <SectionPlaceholder title="Loading AI demo..." />,
 });
+const ProductShowcase = dynamic(() => import("./Landing Page/ProductShowcase"), {
+  loading: () => <SectionPlaceholder title="Loading product tour..." />,
+});
 const FakeDashboard = dynamic(() => import("./Landing Page/FakeDashboard"), {
   loading: () => <SectionPlaceholder title="Loading dashboard..." />,
+});
+const Pricing = dynamic(() => import("./Landing Page/Pricing"), {
+  loading: () => <SectionPlaceholder title="Loading pricing..." />,
 });
 const Testimonials = dynamic(() => import("./Landing Page/Testimonials"), {
   loading: () => <SectionPlaceholder title="Loading reviews..." />,
@@ -32,8 +38,10 @@ export default function Home() {
       <NavBar />
       <Hero />
       <Features />
+      <ProductShowcase />
       <AiDemoChat />
       <FakeDashboard />
+      <Pricing />
       <Testimonials />
       <Footer />
     </main>
