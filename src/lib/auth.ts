@@ -7,11 +7,22 @@ const TOKEN_COOKIE_NAME = "token";
 type AuthTokenPayload = {
   id: string;
   role?: string;
+  email?: string;
+};
+
+type VerifiedAuthToken = {
+  id: string;
+  role?: string;
+  email?: string;
 };
 
 type RequireUserResult =
   | { userId: string; error?: never }
   | { userId: null; error: NextResponse };
+
+type RequireAdminResult =
+  | { user: VerifiedAuthToken; error?: never }
+  | { user: null; error: NextResponse };
 
 function getJwtSecret() {
   const secret = process.env.JWT_SECRET?.trim();
@@ -34,7 +45,7 @@ export function createToken(payload: AuthTokenPayload) {
   );
 }
 
-export async function getUserIdFromToken() {
+export async function getAuthTokenPayload(): Promise<VerifiedAuthToken | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(TOKEN_COOKIE_NAME)?.value;
 
@@ -44,10 +55,22 @@ export async function getUserIdFromToken() {
     const decoded = jwt.verify(token, getJwtSecret()) as jwt.JwtPayload;
     const id = decoded.id ?? decoded.userId;
 
-    return typeof id === "string" ? id : null;
+    if (typeof id !== "string") return null;
+
+    return {
+      id,
+      email: typeof decoded.email === "string" ? decoded.email : undefined,
+      role: typeof decoded.role === "string" ? decoded.role : undefined,
+    };
   } catch {
     return null;
   }
+}
+
+export async function getUserIdFromToken() {
+  const payload = await getAuthTokenPayload();
+
+  return payload?.id ?? null;
 }
 
 export async function requireUser(): Promise<RequireUserResult> {
@@ -71,6 +94,31 @@ export async function requireUser(): Promise<RequireUserResult> {
         { status: 500 }
       ),
       userId: null,
+    };
+  }
+}
+
+export async function requireAdmin(): Promise<RequireAdminResult> {
+  try {
+    const user = await getAuthTokenPayload();
+
+    if (!user || user.role !== "ADMIN") {
+      return {
+        error: NextResponse.json({ error: "Admin access required" }, { status: 403 }),
+        user: null,
+      };
+    }
+
+    return { user };
+  } catch (error) {
+    console.error("ADMIN AUTH CONFIG ERROR:", error);
+
+    return {
+      error: NextResponse.json(
+        { error: "Server auth configuration is missing" },
+        { status: 500 }
+      ),
+      user: null,
     };
   }
 }

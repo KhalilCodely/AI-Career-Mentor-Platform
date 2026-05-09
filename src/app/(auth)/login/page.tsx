@@ -71,7 +71,7 @@ export default function LoginPage() {
         throw new Error(data.error || "Login failed");
       }
 
-      router.push("/dashboard");
+      router.push(data.redirectTo || (data.role === "ADMIN" ? "/admin" : "/dashboard"));
       router.refresh();
     } catch (err: unknown) {
       console.error("LOGIN ERROR:", err);
