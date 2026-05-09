@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Eye, EyeOff, LockKeyhole, Mail, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import BrandLogo from "@/components/BrandLogo";
 import { useState } from "react";
 
 export default function LoginPage() {
@@ -82,16 +83,24 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-10 text-slate-950">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.35),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.28),transparent_30%),linear-gradient(135deg,#020617_0%,#0f172a_45%,#111827_100%)]" />
-      <div className="absolute left-1/2 top-10 h-64 w-64 -translate-x-1/2 rounded-full bg-blue-400/20 blur-3xl" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-10 text-slate-950 sm:px-6">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.42),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.32),transparent_30%),linear-gradient(135deg,#020617_0%,#0f172a_45%,#111827_100%)]" />
+      <div className="absolute left-1/2 top-8 h-72 w-72 -translate-x-1/2 rounded-full bg-blue-400/20 blur-3xl" />
+      <div className="absolute bottom-8 right-8 h-72 w-72 rounded-full bg-purple-500/10 blur-3xl" />
 
-      <section className="relative grid w-full max-w-5xl overflow-hidden rounded-[2rem] border border-white/15 bg-white/90 shadow-2xl shadow-blue-950/30 backdrop-blur xl:grid-cols-[1fr_0.9fr]">
-        <div className="hidden flex-col justify-between bg-slate-950 p-10 text-white xl:flex">
-          <div>
-            <div className="mb-10 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-blue-100">
-              <Sparkles className="h-4 w-4" />
-              Career Mentor
+      <section className="relative grid w-full max-w-6xl overflow-hidden rounded-[2rem] border border-white/20 bg-white/95 shadow-2xl shadow-blue-950/40 backdrop-blur xl:grid-cols-[1.05fr_0.95fr]">
+        <div className="relative hidden flex-col justify-between overflow-hidden bg-slate-950 p-10 text-white xl:flex">
+          <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
+          <div className="absolute -bottom-24 left-10 h-72 w-72 rounded-full bg-purple-500/20 blur-3xl" />
+          <div className="relative">
+            <BrandLogo
+              className="mb-10 rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur"
+              titleClassName="text-lg"
+              subtitleClassName="text-[11px] text-blue-100"
+            />
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-blue-100">
+              <ShieldCheck className="h-4 w-4" />
+              Secure mentor workspace
             </div>
             <h1 className="text-4xl font-bold tracking-tight">
               Welcome back to your career growth hub.
@@ -101,23 +110,24 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="relative grid grid-cols-3 gap-3">
             {["Personal roadmap", "AI practice", "Resume insights"].map((item) => (
-              <div key={item} className="rounded-2xl border border-white/10 bg-white/10 p-4 text-sm font-semibold">
+              <div key={item} className="rounded-2xl border border-white/10 bg-white/10 p-4 text-sm font-semibold shadow-lg shadow-black/10 backdrop-blur">
+                <CheckCircle2 className="mb-3 h-5 w-5 text-blue-300" />
                 {item}
               </div>
             ))}
           </div>
         </div>
 
-        <div className="p-6 sm:p-8 lg:p-10">
+        <div className="bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] p-6 sm:p-8 lg:p-10">
           <div className="mx-auto max-w-md">
-            <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-950 text-white">
-                <Sparkles className="h-4 w-4" />
-              </span>
-              Career Mentor
-            </Link>
+            <div className="mb-8 flex items-center justify-between gap-4">
+              <BrandLogo />
+              <Link href="/" className="rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
+                Home
+              </Link>
+            </div>
 
             <div className="mb-8">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Sign in</p>
@@ -181,7 +191,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-950/20 transition hover:-translate-y-0.5 hover:bg-blue-700 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+                className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:-translate-y-0.5 hover:shadow-blue-500/35 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "Signing in..." : "Sign in"}
                 {!loading ? <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /> : null}

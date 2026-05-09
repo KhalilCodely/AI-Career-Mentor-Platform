@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
 import { useEffect, useState } from "react";
 
 const links = [
@@ -45,57 +46,7 @@ export default function NavBar() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
 
-        {/* 🔥 LOGO */}
-        <Link href="/" className="flex items-center gap-3 group">
-
-  {/* 🔥 Advanced Logo Icon */}
-  <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 shadow-lg transition group-hover:scale-105">
-
-    {/* Glow ring */}
-    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-400 to-purple-500 opacity-30 blur-md"></div>
-
-    {/* SVG icon */}
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      className="relative h-5 w-5"
-      stroke="white"
-      strokeWidth="1.8"
-    >
-      {/* Brain / network */}
-      <path d="M8 12a4 4 0 018 0M6 12a6 6 0 0112 0" strokeLinecap="round"/>
-      <circle cx="8" cy="12" r="1" fill="white"/>
-      <circle cx="16" cy="12" r="1" fill="white"/>
-      <circle cx="12" cy="8" r="1" fill="white"/>
-      <circle cx="12" cy="16" r="1" fill="white"/>
-
-      {/* Growth arrow */}
-      <path d="M10 14l2-2 2 2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  </div>
-
-  {/* 🔥 Brand Text */}
-  <div className="flex flex-col leading-tight">
-
-    {/* Main brand */}
-    <span className="text-lg font-extrabold tracking-tight bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
-      Career Mentor
-    </span>
-
-    {/* Subtitle */}
-    <div className="flex items-center gap-2">
-      <span className="text-[11px] uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
-        AI Guidance
-      </span>
-
-      {/* Small badge */}
-      <span className="rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-2 py-[2px] text-[9px] font-bold text-white">
-        AI
-      </span>
-    </div>
-
-  </div>
-</Link>
+        <BrandLogo />
 
         {/* Desktop Menu */}
         <div className="hidden items-center gap-2 rounded-full border border-zinc-200/70 bg-white/70 p-1 text-sm shadow-sm backdrop-blur md:flex dark:border-white/10 dark:bg-white/5">

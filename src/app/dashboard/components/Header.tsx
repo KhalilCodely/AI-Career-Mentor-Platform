@@ -1,7 +1,8 @@
 "use client";
 
-import { Bell, ChevronDown, LogOut, Menu, Search, Sparkles } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Menu, Search } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import BrandLogo from "@/components/BrandLogo";
 import { useState } from "react";
 
 const navItems = [
@@ -33,11 +34,11 @@ export default function Header() {
       .at(-1)?.name ?? "Workspace";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-gray-200/80 bg-white/85 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-blue-100/80 bg-white/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <button
-            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 hover:text-gray-950 md:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 md:hidden"
             onClick={() => setOpen((current) => !current)}
             aria-label="Toggle dashboard navigation"
             aria-expanded={open}
@@ -45,9 +46,12 @@ export default function Header() {
             <Menu className="h-5 w-5" />
           </button>
 
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gray-950 text-white shadow-lg shadow-gray-950/10 md:hidden">
-            <Sparkles className="h-5 w-5" />
-          </div>
+          <BrandLogo
+            href="/dashboard"
+            compact
+            iconClassName="h-11 w-11 rounded-2xl"
+            className="md:hidden"
+          />
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -60,7 +64,7 @@ export default function Header() {
           </div>
         </div>
 
-        <nav className="hidden items-center rounded-2xl bg-gray-100 p-1 text-sm font-semibold text-gray-600 lg:flex">
+        <nav className="hidden items-center rounded-2xl border border-blue-100 bg-blue-50/80 p-1 text-sm font-semibold text-gray-600 lg:flex">
           {navItems.map((item) => {
             const isActive =
               pathname === item.path || (item.path !== "/dashboard" && pathname.startsWith(item.path));
@@ -70,7 +74,7 @@ export default function Header() {
                 key={item.name}
                 onClick={() => navigateTo(item.path)}
                 className={`rounded-xl px-4 py-2 transition ${
-                  isActive ? "bg-white text-gray-950 shadow-sm" : "hover:text-gray-950"
+                  isActive ? "bg-white text-blue-700 shadow-sm" : "hover:text-blue-700"
                 }`}
               >
                 {item.name}
@@ -89,13 +93,13 @@ export default function Header() {
             />
           </label>
 
-          <button className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 hover:text-gray-950" aria-label="Notifications">
+          <button className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700" aria-label="Notifications">
             <Bell className="h-5 w-5" />
             <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full border-2 border-white bg-red-500" />
           </button>
 
           <button className="hidden items-center gap-3 rounded-2xl border border-gray-200 bg-white py-1.5 pl-1.5 pr-3 text-left shadow-sm transition hover:border-gray-300 hover:bg-gray-50 sm:flex">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-sm font-bold text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-sm font-bold text-white">
               U
             </span>
             <span className="hidden lg:block">
@@ -127,7 +131,7 @@ export default function Header() {
                   key={item.name}
                   onClick={() => navigateTo(item.path)}
                   className={`rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${
-                    isActive ? "bg-gray-950 text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-950"
+                    isActive ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white" : "text-gray-600 hover:bg-blue-50 hover:text-blue-700"
                   }`}
                 >
                   {item.name}

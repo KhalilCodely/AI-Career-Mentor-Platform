@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail, Sparkles, User } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck, User } from "lucide-react";
+import BrandLogo from "@/components/BrandLogo";
 import { useMemo, useState } from "react";
 
 export default function RegisterPage() {
@@ -88,15 +89,23 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-10 text-slate-950">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.34),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(14,165,233,0.24),transparent_30%),linear-gradient(135deg,#020617_0%,#0f172a_48%,#111827_100%)]" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-10 text-slate-950 sm:px-6">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.42),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(168,85,247,0.28),transparent_30%),linear-gradient(135deg,#020617_0%,#0f172a_48%,#111827_100%)]" />
       <div className="absolute -right-16 top-16 h-80 w-80 rounded-full bg-cyan-300/20 blur-3xl" />
+      <div className="absolute -left-12 bottom-16 h-72 w-72 rounded-full bg-purple-500/10 blur-3xl" />
 
-      <section className="relative grid w-full max-w-5xl overflow-hidden rounded-[2rem] border border-white/15 bg-white/90 shadow-2xl shadow-blue-950/30 backdrop-blur xl:grid-cols-[0.9fr_1fr]">
-        <div className="hidden flex-col justify-between bg-slate-950 p-10 text-white xl:flex">
-          <div>
-            <div className="mb-10 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-cyan-100">
-              <Sparkles className="h-4 w-4" />
+      <section className="relative grid w-full max-w-6xl overflow-hidden rounded-[2rem] border border-white/20 bg-white/95 shadow-2xl shadow-blue-950/40 backdrop-blur xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="relative hidden flex-col justify-between overflow-hidden bg-slate-950 p-10 text-white xl:flex">
+          <div className="absolute -right-16 top-10 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
+          <div className="absolute -bottom-20 left-6 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
+          <div className="relative">
+            <BrandLogo
+              className="mb-10 rounded-2xl border border-white/10 bg-white/10 p-3 backdrop-blur"
+              titleClassName="text-lg"
+              subtitleClassName="text-[11px] text-cyan-100"
+            />
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-cyan-100">
+              <ShieldCheck className="h-4 w-4" />
               Start strong
             </div>
             <h1 className="text-4xl font-bold tracking-tight">Build a smarter path to your next role.</h1>
@@ -105,9 +114,9 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          <div className="space-y-3">
+          <div className="relative space-y-3">
             {["Personalized learning roadmap", "Skill progress tracking", "AI career practice sessions"].map((item) => (
-              <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 p-4 text-sm font-semibold">
+              <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 p-4 text-sm font-semibold shadow-lg shadow-black/10 backdrop-blur">
                 <CheckCircle2 className="h-5 w-5 text-cyan-300" />
                 {item}
               </div>
@@ -115,17 +124,17 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <div className="p-6 sm:p-8 lg:p-10">
+        <div className="bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)] p-6 sm:p-8 lg:p-10">
           <div className="mx-auto max-w-md">
-            <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950">
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-950 text-white">
-                <Sparkles className="h-4 w-4" />
-              </span>
-              Career Mentor
-            </Link>
+            <div className="mb-8 flex items-center justify-between gap-4">
+              <BrandLogo />
+              <Link href="/" className="rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
+                Home
+              </Link>
+            </div>
 
             <div className="mb-8">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-600">Create account</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Create account</p>
               <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Join Career Mentor</h2>
               <p className="mt-2 text-sm text-slate-500">Set up your profile and start your guided career journey.</p>
             </div>
@@ -145,7 +154,7 @@ export default function RegisterPage() {
             >
               <div>
                 <label htmlFor="name" className="text-sm font-semibold text-slate-700">Full name</label>
-                <div className="mt-2 flex items-center rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition focus-within:border-cyan-500 focus-within:ring-4 focus-within:ring-cyan-100">
+                <div className="mt-2 flex items-center rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100">
                   <User className="h-5 w-5 text-slate-400" />
                   <input
                     id="name"
@@ -161,7 +170,7 @@ export default function RegisterPage() {
 
               <div>
                 <label htmlFor="email" className="text-sm font-semibold text-slate-700">Email</label>
-                <div className="mt-2 flex items-center rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition focus-within:border-cyan-500 focus-within:ring-4 focus-within:ring-cyan-100">
+                <div className="mt-2 flex items-center rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100">
                   <Mail className="h-5 w-5 text-slate-400" />
                   <input
                     id="email"
@@ -178,7 +187,7 @@ export default function RegisterPage() {
 
               <div>
                 <label htmlFor="password" className="text-sm font-semibold text-slate-700">Password</label>
-                <div className="mt-2 flex items-center rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition focus-within:border-cyan-500 focus-within:ring-4 focus-within:ring-cyan-100">
+                <div className="mt-2 flex items-center rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100">
                   <LockKeyhole className="h-5 w-5 text-slate-400" />
                   <input
                     id="password"
@@ -204,7 +213,7 @@ export default function RegisterPage() {
                   {[1, 2, 3].map((level) => (
                     <span
                       key={level}
-                      className={`h-1.5 rounded-full transition ${passwordScore >= level ? "bg-cyan-500" : "bg-slate-200"}`}
+                      className={`h-1.5 rounded-full transition ${passwordScore >= level ? "bg-blue-500" : "bg-slate-200"}`}
                     />
                   ))}
                 </div>
@@ -214,7 +223,7 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-950/20 transition hover:-translate-y-0.5 hover:bg-cyan-700 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+                className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:-translate-y-0.5 hover:shadow-blue-500/35 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "Creating account..." : "Create account"}
                 {!loading ? <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /> : null}
@@ -223,7 +232,7 @@ export default function RegisterPage() {
 
             <p className="mt-8 text-center text-sm text-slate-500">
               Already have an account?{" "}
-              <Link href="/login" className="font-bold text-cyan-600 transition hover:text-cyan-700 hover:underline">
+              <Link href="/login" className="font-bold text-blue-600 transition hover:text-blue-700 hover:underline">
                 Sign in
               </Link>
             </p>

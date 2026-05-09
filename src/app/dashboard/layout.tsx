@@ -13,7 +13,7 @@ export default async function DashboardLayout({
   if (auth.error) redirect("/login");
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_30%),linear-gradient(180deg,#f8fbff_0%,#eef4ff_100%)]">
       <Sidebar />
 
       <div className="min-w-0 flex-1">
