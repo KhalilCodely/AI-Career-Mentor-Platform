@@ -9,67 +9,65 @@ export default function Footer() {
   const [open, setOpen] = useState(false);
 
   return (
-    <footer className="relative bg-gradient-to-b from-white to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 border-t border-zinc-200 dark:border-zinc-800 overflow-hidden">
+    <footer className="relative isolate overflow-hidden border-t border-zinc-200 bg-zinc-950 text-white dark:border-white/10">
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_0%,rgba(59,130,246,0.22),transparent_28%),radial-gradient(circle_at_80%_100%,rgba(168,85,247,0.18),transparent_30%)]" />
 
-      {/* 🌈 Background Glow */}
-      <div className="absolute w-[300px] h-[300px] bg-blue-400/20 blur-3xl rounded-full top-0 left-0"></div>
-      <div className="absolute w-[300px] h-[300px] bg-purple-400/20 blur-3xl rounded-full bottom-0 right-0"></div>
-
-      <div className="relative max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-3 gap-10">
-
-        {/* 🧠 Brand */}
+      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-16 md:grid-cols-[1.3fr_0.7fr_0.7fr]">
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
         >
-          <h2 className="text-xl font-bold mb-3">CareerMentorAI</h2>
-          <p className="text-sm text-zinc-600 dark:text-zinc-300">
-            AI-powered platform to guide your career, improve your skills,
-            and help you land your dream job faster.
+          <h2 className="text-2xl font-black tracking-tight">CareerMentorAI</h2>
+          <p className="mt-4 max-w-md text-sm leading-7 text-zinc-300">
+            AI-powered platform to guide your career, improve your skills, and help you land your dream job faster.
           </p>
+          <Link
+            href="/register"
+            className="mt-6 inline-flex rounded-2xl bg-white px-5 py-3 text-sm font-bold text-zinc-950 transition hover:-translate-y-0.5 hover:bg-blue-100"
+          >
+            Build my roadmap
+          </Link>
         </motion.div>
 
-        {/* 📦 Product */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
         >
-          <h3 className="font-semibold mb-3">Product</h3>
-          <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
-            <li><a href="#features">Features</a></li>
-            <li><a href="#ai-demo">AI Demo</a></li>
-            <li><a href="#dashboard">Dashboard</a></li>
+          <h3 className="font-bold">Product</h3>
+          <ul className="mt-4 space-y-3 text-sm text-zinc-300">
+            <li><a className="transition hover:text-white" href="#features">Features</a></li>
+            <li><a className="transition hover:text-white" href="#ai-demo">AI Demo</a></li>
+            <li><a className="transition hover:text-white" href="#dashboard">Dashboard</a></li>
           </ul>
         </motion.div>
 
-        {/* 🏢 Company */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
         >
-          <h3 className="font-semibold mb-3">Company</h3>
-          <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-300">
-            <li><Link href="/login">Login</Link></li>
-            <li><Link href="/signup">Sign Up</Link></li>
+          <h3 className="font-bold">Company</h3>
+          <ul className="mt-4 space-y-3 text-sm text-zinc-300">
+            <li><Link className="transition hover:text-white" href="/login">Login</Link></li>
+            <li><Link className="transition hover:text-white" href="/register">Sign Up</Link></li>
             <li>
               <button
                 onClick={() => setOpen(true)}
-                className="hover:text-black dark:hover:text-white transition"
+                className="transition hover:text-white"
               >
                 Contact
               </button>
             </li>
           </ul>
         </motion.div>
-
       </div>
 
-      {/* 🔻 Bottom */}
-      <div className="border-t border-zinc-200 dark:border-zinc-800 text-center py-6 text-sm text-zinc-500">
+      <div className="border-t border-white/10 px-6 py-6 text-center text-sm text-zinc-400">
         © 2026 CareerMentorAI. All rights reserved.
       </div>
 
-      {/* 📩 Contact Modal */}
       <ContactModal open={open} onClose={() => setOpen(false)} />
     </footer>
   );

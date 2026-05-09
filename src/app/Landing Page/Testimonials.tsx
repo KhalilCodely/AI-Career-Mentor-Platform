@@ -34,13 +34,13 @@ const container = {
   hidden: {},
   show: {
     transition: {
-      staggerChildren: 0.2,
+      staggerChildren: 0.14,
     },
   },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 50 },
+  hidden: { opacity: 0, y: 32 },
   show: { opacity: 1, y: 0 },
 };
 
@@ -48,81 +48,80 @@ export default function Testimonials() {
   return (
     <section
       id="reviews"
-      className="relative py-24 px-6 bg-gradient-to-b from-white to-zinc-100 dark:from-zinc-950 dark:to-zinc-900 overflow-hidden"
+      className="relative isolate overflow-hidden bg-slate-50 px-6 py-24 dark:bg-zinc-900"
     >
-      {/* 🔵 Background Glow */}
-      <div className="absolute w-[400px] h-[400px] bg-blue-400/20 blur-3xl rounded-full top-0 left-0"></div>
-      <div className="absolute w-[400px] h-[400px] bg-purple-400/20 blur-3xl rounded-full bottom-0 right-0"></div>
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_0%_0%,rgba(59,130,246,0.16),transparent_28%),radial-gradient(circle_at_100%_60%,rgba(168,85,247,0.16),transparent_30%)]" />
 
-      {/* Title */}
-      <div className="max-w-4xl mx-auto text-center mb-16">
-        <motion.h2
-          initial={{ opacity: 0, y: 40 }}
+      <div className="mx-auto mb-16 max-w-4xl text-center">
+        <motion.span
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          className="text-3xl md:text-4xl font-bold"
+          viewport={{ once: true }}
+          className="inline-flex rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-zinc-200"
         >
-          What Our Users Say
+          Trusted by ambitious learners
+        </motion.span>
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-5 text-4xl font-black tracking-tight text-zinc-950 md:text-5xl dark:text-white"
+        >
+          Career growth feels better when the path is clear.
         </motion.h2>
-
-        <p className="text-zinc-600 dark:text-zinc-300 mt-3">
-          Real feedback from people who transformed their careers
+        <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-zinc-600 dark:text-zinc-300">
+          Learners use Career Mentor to focus their effort, improve their story, and move with confidence.
         </p>
       </div>
 
-      {/* Cards */}
       <motion.div
         variants={container}
         initial="hidden"
         whileInView="show"
         viewport={{ once: true }}
-        className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8"
+        className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3"
       >
-        {reviews.map((r, i) => (
+        {reviews.map((review) => (
           <motion.div
-            key={i}
+            key={review.name}
             variants={item}
-            whileHover={{
-              scale: 1.05,
-              rotateX: 5,
-              rotateY: -5,
-            }}
-            className="p-6 bg-white/70 dark:bg-zinc-800/70 backdrop-blur rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-700 transition"
+            whileHover={{ y: -8 }}
+            className="relative overflow-hidden rounded-3xl border border-white bg-white/85 p-6 shadow-xl shadow-slate-200/60 backdrop-blur transition dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/20"
           >
-            {/* User */}
-            <div className="flex items-center gap-4 mb-4">
+            <div className="absolute right-5 top-4 text-6xl font-black leading-none text-blue-100 dark:text-white/5">“</div>
+            <div className="relative flex items-center gap-4">
               <Image
-                src={r.img}
-                alt={`${r.name} avatar`}
-                width={48}
-                height={48}
-                className="w-12 h-12 rounded-full border"
+                src={review.img}
+                alt={`${review.name} avatar`}
+                width={52}
+                height={52}
+                className="h-13 w-13 rounded-2xl border border-zinc-200 dark:border-white/10"
               />
               <div>
-                <p className="font-semibold">{r.name}</p>
-                <p className="text-xs text-zinc-500">
-                  {r.role} • {r.company}
+                <p className="font-bold text-zinc-950 dark:text-white">{review.name}</p>
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                  {review.role} • {review.company}
                 </p>
               </div>
             </div>
 
-            {/* Stars */}
-            <div className="flex gap-1 mb-3">
-              {Array.from({ length: r.rating }).map((_, i) => (
+            <div className="mt-5 flex gap-1">
+              {Array.from({ length: review.rating }).map((_, i) => (
                 <motion.span
                   key={i}
                   initial={{ opacity: 0, scale: 0 }}
                   whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="text-yellow-500"
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.06 }}
+                  className="text-lg text-amber-400"
                 >
                   ★
                 </motion.span>
               ))}
             </div>
 
-            {/* Text */}
-            <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
-              {r.text}
+            <p className="mt-4 text-sm leading-7 text-zinc-600 dark:text-zinc-300">
+              {review.text}
             </p>
           </motion.div>
         ))}
