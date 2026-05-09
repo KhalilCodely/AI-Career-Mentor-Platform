@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
+import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 const TOKEN_COOKIE_NAME = "token";
 
@@ -77,15 +79,35 @@ export async function requireUser(): Promise<RequireUserResult> {
   try {
     const userId = await getUserIdFromToken();
 
-    if (!userId) {
+    if (!userId || userId === "admin") {
       return {
         error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
         userId: null,
       };
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isLocked: true },
+    });
+
+    if (!user) {
+      return {
+        error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+        userId: null,
+      };
+    }
+
+    if (user.isLocked) {
+      return {
+        error: NextResponse.json({ error: "Account locked" }, { status: 423 }),
+        userId: null,
+      };
+    }
+
     return { userId };
   } catch (error) {
+    unstable_rethrow(error);
     console.error("AUTH CONFIG ERROR:", error);
 
     return {
@@ -109,8 +131,30 @@ export async function requireAdmin(): Promise<RequireAdminResult> {
       };
     }
 
+    if (user.id !== "admin") {
+      const account = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { isLocked: true, role: true },
+      });
+
+      if (!account || account.role !== "ADMIN") {
+        return {
+          error: NextResponse.json({ error: "Admin access required" }, { status: 403 }),
+          user: null,
+        };
+      }
+
+      if (account.isLocked) {
+        return {
+          error: NextResponse.json({ error: "Account locked" }, { status: 423 }),
+          user: null,
+        };
+      }
+    }
+
     return { user };
   } catch (error) {
+    unstable_rethrow(error);
     console.error("ADMIN AUTH CONFIG ERROR:", error);
 
     return {
