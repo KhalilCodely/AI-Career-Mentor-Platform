@@ -13,33 +13,39 @@ import {
 const features = [
   {
     title: "AI Career Guidance",
-    desc: "Get personalized career advice based on your goals and skills.",
+    desc: "Translate goals into a realistic plan with recommended roles, milestones, and weekly priorities.",
     icon: Brain,
+    accent: "from-blue-500 to-cyan-500",
   },
   {
     title: "Resume Analyzer",
-    desc: "Improve your resume with smart AI feedback.",
+    desc: "Spot weak bullets, missing keywords, and formatting gaps before you apply.",
     icon: FileText,
+    accent: "from-violet-500 to-fuchsia-500",
   },
   {
     title: "Job Matching",
-    desc: "Find jobs tailored to your profile instantly.",
+    desc: "Compare your profile with target roles so every application has a clear reason behind it.",
     icon: Briefcase,
+    accent: "from-emerald-500 to-teal-500",
   },
   {
     title: "Interview Practice",
-    desc: "Practice real interview questions with AI simulation.",
+    desc: "Rehearse role-specific questions and get concise feedback on structure and confidence.",
     icon: Mic,
+    accent: "from-orange-500 to-rose-500",
   },
   {
     title: "Skill Tracking",
-    desc: "Track your learning progress and improve faster.",
+    desc: "See what is complete, what is blocked, and what to learn next from one simple dashboard.",
     icon: TrendingUp,
+    accent: "from-indigo-500 to-blue-500",
   },
   {
     title: "Secure Platform",
-    desc: "Your data is protected with enterprise-level security.",
+    desc: "Keep sensitive profile and resume details protected while you plan your next move.",
     icon: Shield,
+    accent: "from-slate-700 to-zinc-950 dark:from-zinc-200 dark:to-white",
   },
 ];
 
@@ -47,13 +53,13 @@ const container = {
   hidden: {},
   show: {
     transition: {
-      staggerChildren: 0.15,
+      staggerChildren: 0.12,
     },
   },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 50 },
+  hidden: { opacity: 0, y: 30 },
   show: { opacity: 1, y: 0 },
 };
 
@@ -61,62 +67,58 @@ export default function Features() {
   return (
     <section
       id="features"
-      className="relative py-24 px-6 bg-linear-to-b from-zinc-50 to-white dark:from-zinc-950 dark:to-zinc-900 overflow-hidden"
+      className="relative isolate overflow-hidden bg-white px-6 py-24 dark:bg-zinc-950"
     >
-      {/* 🔵 Background glow */}
-      <div className="absolute w-75 h-75 bg-blue-400/20 blur-3xl rounded-full top-10 left-10"></div>
-      <div className="absolute w-75 h-75 bg-purple-400/20 blur-3xl rounded-full bottom-10 right-10"></div>
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.14),transparent_28%),radial-gradient(circle_at_80%_55%,rgba(168,85,247,0.14),transparent_30%)]" />
 
-      {/* Title */}
-      <div className="max-w-4xl mx-auto text-center mb-16">
-        <motion.h2
-          initial={{ opacity: 0, y: 40 }}
+      <div className="mx-auto mb-16 max-w-4xl text-center">
+        <motion.span
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          className="text-3xl md:text-4xl font-bold"
+          viewport={{ once: true }}
+          className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 dark:border-blue-400/30 dark:bg-blue-400/10 dark:text-blue-200"
         >
-          Powerful Features
+          Everything in one career workspace
+        </motion.span>
+        <motion.h2
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-5 text-4xl font-black tracking-tight text-zinc-950 md:text-5xl dark:text-white"
+        >
+          A cleaner way to choose, learn, and land your next role.
         </motion.h2>
-
-        <p className="text-zinc-600 dark:text-zinc-300 mt-3">
-          Everything you need to accelerate your career growth
+        <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-zinc-600 dark:text-zinc-300">
+          Career Mentor combines planning, feedback, and progress tracking so you always know the next useful step.
         </p>
       </div>
 
-      {/* Cards */}
       <motion.div
         variants={container}
         initial="hidden"
         whileInView="show"
         viewport={{ once: true }}
-        className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8"
+        className="mx-auto grid max-w-6xl gap-5 md:grid-cols-2 lg:grid-cols-3"
       >
-        {features.map((f, i) => {
-          const Icon = f.icon;
+        {features.map((feature) => {
+          const Icon = feature.icon;
 
           return (
             <motion.div
-              key={i}
+              key={feature.title}
               variants={item}
-              whileHover={{
-                scale: 1.05,
-                rotateX: 5,
-                rotateY: -5,
-              }}
-              className="p-6 bg-white/70 dark:bg-zinc-800/70 backdrop-blur rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-700 transition group"
+              whileHover={{ y: -8 }}
+              className="group relative overflow-hidden rounded-3xl border border-zinc-200/80 bg-white p-6 shadow-sm transition hover:border-blue-200 hover:shadow-2xl hover:shadow-blue-100/70 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-blue-300/30 dark:hover:shadow-black/30"
             >
-              {/* Icon */}
-              <div className="mb-4 w-12 h-12 flex items-center justify-center rounded-xl bg-black/5 dark:bg-white/10 group-hover:scale-110 transition">
-                <Icon className="w-6 h-6" />
+              <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${feature.accent}`} />
+              <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${feature.accent} text-white shadow-lg shadow-zinc-300/40 transition group-hover:scale-105 dark:text-zinc-950 dark:shadow-none`}>
+                <Icon className="h-7 w-7" />
               </div>
-
-              {/* Title */}
-              <h3 className="font-semibold text-lg mb-2">
-                {f.title}
+              <h3 className="text-xl font-bold text-zinc-950 dark:text-white">
+                {feature.title}
               </h3>
-
-              {/* Description */}
-              <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                {f.desc}
+              <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
+                {feature.desc}
               </p>
             </motion.div>
           );
