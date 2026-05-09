@@ -13,13 +13,15 @@ export default async function DashboardLayout({
   if (auth.error) redirect("/login");
 
   return (
-    <div className="flex min-h-screen bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_30%),linear-gradient(180deg,#f8fbff_0%,#eef4ff_100%)]">
-      <Sidebar />
+    <div className="min-h-screen bg-[#f8efcf] bg-[radial-gradient(circle_at_15%_10%,rgba(255,216,107,0.55),transparent_26%),radial-gradient(circle_at_85%_0%,rgba(155,215,255,0.58),transparent_25%),linear-gradient(180deg,#fff8df_0%,#eaf7d7_100%)] text-[#2d2a24]">
+      <div className="flex min-h-screen">
+        <Sidebar />
 
-      <div className="min-w-0 flex-1">
-        <Header />
+        <div className="min-w-0 flex-1">
+          <Header />
 
-        <main className="p-4 pb-28 md:p-6 md:pb-6">{children}</main>
+          <main className="mx-auto max-w-7xl p-4 pb-28 md:p-6 md:pb-8">{children}</main>
+        </div>
       </div>
     </div>
   );
