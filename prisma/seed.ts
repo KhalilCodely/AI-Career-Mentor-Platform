@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, UserRole } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -81,6 +82,31 @@ function buildCareerRoadmap(path: typeof careerPathSeeds[number]) {
 
 
 async function main() {
+  const adminEmail = "khaliloyoussef@gmail";
+  const adminPasswordHash = await bcrypt.hash("Admin97", 10);
+
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {
+      name: "Khalilo Youssef",
+      passwordHash: adminPasswordHash,
+      role: UserRole.ADMIN,
+    },
+    create: {
+      name: "Khalilo Youssef",
+      email: adminEmail,
+      passwordHash: adminPasswordHash,
+      role: UserRole.ADMIN,
+      profile: {
+        create: {
+          bio: "Application administrator",
+          experienceLevel: "Admin",
+          careerGoal: "Manage Career Mentor content and users",
+        },
+      },
+    },
+  });
+
   const data = [
     {
       name: "Development",
@@ -234,7 +260,7 @@ async function main() {
     });
   }
 
-  console.log(`✅ Skills + ${courses.length} courses + ${careerPathSeeds.length} career paths seeded`);
+  console.log(`✅ Admin user + Skills + ${courses.length} courses + ${careerPathSeeds.length} career paths seeded`);
 }
 
 main()
