@@ -39,6 +39,7 @@ export default function Footer() {
           <ul className="mt-4 space-y-3 text-sm text-zinc-300">
             <li><a className="transition hover:text-white" href="#features">Features</a></li>
             <li><a className="transition hover:text-white" href="#product">Product Tour</a></li>
+            <li><a className="transition hover:text-white" href="#job-sites">Job Sites</a></li>
             <li><a className="transition hover:text-white" href="#pricing">Pricing</a></li>
           </ul>
         </motion.div>

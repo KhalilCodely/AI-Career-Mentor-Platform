@@ -14,6 +14,9 @@ const ProductShowcase = dynamic(() => import("./Landing Page/ProductShowcase"), 
 const FakeDashboard = dynamic(() => import("./Landing Page/FakeDashboard"), {
   loading: () => <SectionPlaceholder title="Loading dashboard..." />,
 });
+const JobWebsites = dynamic(() => import("./Landing Page/JobWebsites"), {
+  loading: () => <SectionPlaceholder title="Loading job websites..." />,
+});
 const Pricing = dynamic(() => import("./Landing Page/Pricing"), {
   loading: () => <SectionPlaceholder title="Loading pricing..." />,
 });
@@ -41,6 +44,7 @@ export default function Home() {
       <ProductShowcase />
       <AiDemoChat />
       <FakeDashboard />
+      <JobWebsites />
       <Pricing />
       <Testimonials />
       <Footer />
