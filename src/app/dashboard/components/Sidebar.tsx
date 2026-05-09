@@ -14,6 +14,7 @@ import {
   Milestone,
   Menu,
   Sparkles,
+  ShieldCheck,
   User,
 } from "lucide-react";
 
@@ -39,6 +40,10 @@ const navSections = [
     title: "Learning",
     items: [{ name: "Courses", icon: BookOpen, path: "/dashboard/courses" }],
   },
+  {
+    title: "Admin",
+    items: [{ name: "Admin Console", icon: ShieldCheck, path: "/admin" }],
+  },
 ];
 
 const mobileNavItems = navSections.flatMap((section) => section.items);
@@ -48,8 +53,9 @@ export default function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     localStorage.clear();
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
     router.push("/login");
   };
 

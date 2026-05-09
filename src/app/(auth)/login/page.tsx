@@ -149,7 +149,12 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label htmlFor="password" className="text-sm font-semibold text-slate-700">Password</label>
+                <div className="flex items-center justify-between gap-3">
+                  <label htmlFor="password" className="text-sm font-semibold text-slate-700">Password</label>
+                  <Link href="/reset-password" className="text-xs font-bold text-blue-600 transition hover:text-blue-700 hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
                 <div className="mt-2 flex items-center rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100">
                   <LockKeyhole className="h-5 w-5 text-slate-400" />
                   <input

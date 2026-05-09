@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 const TOKEN_COOKIE_NAME = "token";
 
@@ -10,6 +11,10 @@ type AuthTokenPayload = {
 };
 
 type RequireUserResult =
+  | { userId: string; error?: never }
+  | { userId: null; error: NextResponse };
+
+type RequireAdminResult =
   | { userId: string; error?: never }
   | { userId: null; error: NextResponse };
 
@@ -70,6 +75,35 @@ export async function requireUser(): Promise<RequireUserResult> {
         { error: "Server auth configuration is missing" },
         { status: 500 }
       ),
+      userId: null,
+    };
+  }
+}
+
+export async function requireAdmin(): Promise<RequireAdminResult> {
+  const auth = await requireUser();
+
+  if (auth.error) return auth;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: auth.userId },
+      select: { role: true },
+    });
+
+    if (user?.role !== "ADMIN") {
+      return {
+        error: NextResponse.json({ error: "Admin access required" }, { status: 403 }),
+        userId: null,
+      };
+    }
+
+    return { userId: auth.userId };
+  } catch (error) {
+    console.error("ADMIN AUTH ERROR:", error);
+
+    return {
+      error: NextResponse.json({ error: "Unable to verify admin access" }, { status: 500 }),
       userId: null,
     };
   }

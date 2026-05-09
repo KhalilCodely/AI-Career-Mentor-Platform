@@ -27,25 +27,45 @@ enum RecommendationType {
 //////////////////////
 
 model User {
-  id                String             @id @default(uuid()) @db.Uuid
-  name              String             @db.VarChar(120)
-  email             String             @unique @db.VarChar(255)
-  passwordHash      String             @map("password_hash")
-  role              UserRole           @default(USER)
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(120)
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(USER)
 
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  profile           Profile?
-  skills            UserSkill[]
-  careerPaths       UserCareerPath[]
-  aiChats           AiChat[]
-  recommendations   AiRecommendation[]
-  progress          UserProgress[]
-  resumes           Resume[]
+  profile             Profile?
+  skills              UserSkill[]
+  careerPaths         UserCareerPath[]
+  aiChats             AiChat[]
+  recommendations     AiRecommendation[]
+  progress            UserProgress[]
+  resumes             Resume[]
+  passwordResetTokens PasswordResetToken[]
 
   @@index([createdAt])
   @@map("users")
+}
+
+//////////////////////
+// PASSWORD RESET TOKENS
+//////////////////////
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
 }
 
 //////////////////////
@@ -53,20 +73,20 @@ model User {
 //////////////////////
 
 model Profile {
-  id              String   @id @default(uuid()) @db.Uuid
-  userId          String   @unique @map("user_id") @db.Uuid
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @unique @map("user_id") @db.Uuid
 
   bio             String?
   education       String?
-  experienceLevel String?  @map("experience_level")
-  careerGoal      String?  @map("career_goal")
+  experienceLevel String? @map("experience_level")
+  careerGoal      String? @map("career_goal")
 
-  profileImage    String?  @map("profile_image") // ✅ profile picture
+  profileImage String? @map("profile_image") // ✅ profile picture
 
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([experienceLevel])
   @@map("profiles")
@@ -77,10 +97,10 @@ model Profile {
 //////////////////////
 
 model Category {
-  id      String   @id @default(uuid()) @db.Uuid
-  name    String   @unique
+  id   String @id @default(uuid()) @db.Uuid
+  name String @unique
 
-  skills  Skill[]
+  skills Skill[]
 
   @@map("categories")
 }
@@ -90,15 +110,15 @@ model Category {
 //////////////////////
 
 model Skill {
-  id          String      @id @default(uuid()) @db.Uuid
-  name        String
-  categoryId  String?     @map("category_id") @db.Uuid
+  id         String  @id @default(uuid()) @db.Uuid
+  name       String
+  categoryId String? @map("category_id") @db.Uuid
 
-  createdAt   DateTime    @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  category    Category?   @relation(fields: [categoryId], references: [id])
-  users       UserSkill[]
-  courses     Course[]
+  category Category?   @relation(fields: [categoryId], references: [id])
+  users    UserSkill[]
+  courses  Course[]
 
   @@unique([name, categoryId])
   @@index([categoryId])
@@ -110,17 +130,17 @@ model Skill {
 //////////////////////
 
 model UserSkill {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  skillId   String   @map("skill_id") @db.Uuid
+  id      String @id @default(uuid()) @db.Uuid
+  userId  String @map("user_id") @db.Uuid
+  skillId String @map("skill_id") @db.Uuid
 
-  level     Int      @db.SmallInt
+  level Int @db.SmallInt
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  skill     Skill    @relation(fields: [skillId], references: [id])
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id])
 
   @@unique([userId, skillId])
   @@index([userId])
@@ -133,16 +153,16 @@ model UserSkill {
 //////////////////////
 
 model CareerPath {
-  id          String           @id @default(uuid()) @db.Uuid
-  title       String           @unique
+  id          String  @id @default(uuid()) @db.Uuid
+  title       String  @unique
   description String?
 
-  roadmap     Json?            // ✅ AI generated roadmap
+  roadmap Json? // ✅ AI generated roadmap
 
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  users       UserCareerPath[]
+  users UserCareerPath[]
 
   @@map("career_paths")
 }
@@ -152,17 +172,17 @@ model CareerPath {
 //////////////////////
 
 model UserCareerPath {
-  id           String     @id @default(uuid()) @db.Uuid
-  userId       String     @map("user_id") @db.Uuid
-  careerPathId String     @map("career_path_id") @db.Uuid
+  id           String @id @default(uuid()) @db.Uuid
+  userId       String @map("user_id") @db.Uuid
+  careerPathId String @map("career_path_id") @db.Uuid
 
-  progress     Decimal    @default(0) @db.Decimal(5,2)
+  progress Decimal @default(0) @db.Decimal(5, 2)
 
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  careerPath   CareerPath @relation(fields: [careerPathId], references: [id])
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  careerPath CareerPath @relation(fields: [careerPathId], references: [id])
 
   @@unique([userId, careerPathId])
   @@index([userId])
@@ -175,18 +195,18 @@ model UserCareerPath {
 //////////////////////
 
 model Course {
-  id        String         @id @default(uuid()) @db.Uuid
-  title     String
-  provider  String
-  url       String
+  id       String @id @default(uuid()) @db.Uuid
+  title    String
+  provider String
+  url      String
 
-  skillId   String         @map("skill_id") @db.Uuid
+  skillId String @map("skill_id") @db.Uuid
 
-  createdAt DateTime       @default(now()) @map("created_at")
-  updatedAt DateTime       @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  skill     Skill          @relation(fields: [skillId], references: [id])
-  progress  UserProgress[]
+  skill    Skill          @relation(fields: [skillId], references: [id])
+  progress UserProgress[]
 
   @@index([skillId])
   @@map("courses")
@@ -197,18 +217,18 @@ model Course {
 //////////////////////
 
 model UserProgress {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  courseId  String   @map("course_id") @db.Uuid
+  id       String @id @default(uuid()) @db.Uuid
+  userId   String @map("user_id") @db.Uuid
+  courseId String @map("course_id") @db.Uuid
 
-  completed Boolean  @default(false)
-  progress  Decimal  @default(0) @db.Decimal(5,2)
+  completed Boolean @default(false)
+  progress  Decimal @default(0) @db.Decimal(5, 2)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
   @@index([userId])
@@ -221,15 +241,15 @@ model UserProgress {
 //////////////////////
 
 model AiChat {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
 
-  message   String
-  response  String
+  message  String
+  response String
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@map("ai_chats")
@@ -240,15 +260,15 @@ model AiChat {
 //////////////////////
 
 model AiRecommendation {
-  id        String             @id @default(uuid()) @db.Uuid
-  userId    String             @map("user_id") @db.Uuid
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
 
-  type      RecommendationType
-  content   Json
+  type    RecommendationType
+  content Json
 
-  createdAt DateTime           @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, type])
   @@index([createdAt])
@@ -260,16 +280,16 @@ model AiRecommendation {
 //////////////////////
 
 model Resume {
-  id          String   @id @default(uuid()) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
 
-  fileUrl     String   @map("file_url")   // uploaded resume
-  score       Int?     // AI score (0-100)
-  feedback    Json?    // AI feedback
+  fileUrl  String @map("file_url") // uploaded resume
+  score    Int? // AI score (0-100)
+  feedback Json? // AI feedback
 
-  createdAt   DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("resumes")

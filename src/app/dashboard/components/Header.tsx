@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 const navItems = [
+  { name: "Admin", path: "/admin" },
   { name: "Dashboard", path: "/dashboard" },
   { name: "Roadmap", path: "/dashboard/roadmap" },
   { name: "AI Mentor", path: "/dashboard/ai-chat" },
@@ -17,8 +18,9 @@ export default function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     localStorage.clear();
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
     router.push("/login");
   };
 
