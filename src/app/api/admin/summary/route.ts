@@ -9,8 +9,9 @@ export async function GET() {
 
   if (auth.error) return auth.error;
 
-  const [users, skills, courses, careerPaths, resumes, aiChats, recentUsers] = await Promise.all([
+  const [users, lockedUsers, skills, courses, careerPaths, resumes, aiChats, recentUsers] = await Promise.all([
     prisma.user.count(),
+    prisma.user.count({ where: { isLocked: true } }),
     prisma.skill.count(),
     prisma.course.count(),
     prisma.careerPath.count(),
@@ -22,6 +23,7 @@ export async function GET() {
         createdAt: true,
         email: true,
         id: true,
+        isLocked: true,
         name: true,
         role: true,
       },
@@ -34,6 +36,7 @@ export async function GET() {
       aiChats,
       careerPaths,
       courses,
+      lockedUsers,
       resumes,
       skills,
       users,

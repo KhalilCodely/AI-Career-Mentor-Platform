@@ -68,6 +68,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (user.isLocked) {
+      return NextResponse.json(
+        { error: "Account locked. Please contact an administrator." },
+        { status: 423 }
+      );
+    }
+
     const valid = await bcrypt.compare(password, user.passwordHash);
 
     if (!valid) {
