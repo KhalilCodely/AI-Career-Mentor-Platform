@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   GraduationCap,
   Loader2,
+  LockKeyhole,
+  ShieldCheck,
   Sparkles,
   Target,
   UserRound,
@@ -53,6 +55,13 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordNotice, setPasswordNotice] = useState<Notice | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -147,6 +156,11 @@ export default function ProfilePage() {
     return data.url;
   };
 
+  const updatePasswordField = (field: keyof typeof passwordForm, value: string) => {
+    setPasswordNotice(null);
+    setPasswordForm((current) => ({ ...current, [field]: value }));
+  };
+
   const handleSave = async () => {
     setLoading(true);
     setNotice(null);
@@ -188,6 +202,43 @@ export default function ProfilePage() {
       setLoading(false);
     }
   };
+
+  const handlePasswordChange = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordNotice({ type: "error", message: "New password must be at least 8 characters" });
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordNotice({ type: "error", message: "New password and confirmation do not match" });
+      return;
+    }
+
+    setPasswordLoading(true);
+    setPasswordNotice(null);
+
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(passwordForm),
+      });
+      const data = await res.json() as { error?: string; message?: string };
+
+      if (!res.ok) throw new Error(data.error || "Failed to change password");
+
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswordNotice({ type: "success", message: data.message || "Password changed successfully" });
+    } catch (err) {
+      setPasswordNotice({ type: "error", message: err instanceof Error ? err.message : "Failed to change password" });
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
 
   if (initialLoading) {
     return (
@@ -400,6 +451,55 @@ export default function ProfilePage() {
                 value={profile.careerGoal || "Set a career goal"}
               />
             </div>
+          </div>
+
+          <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-gray-200">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-950 text-white">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-950">Security</h2>
+                <p className="mt-1 text-sm text-gray-500">Change your password after confirming your current one.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handlePasswordChange} className="mt-5 space-y-3">
+              {[
+                ["currentPassword", "Current password"],
+                ["newPassword", "New password"],
+                ["confirmPassword", "Confirm new password"],
+              ].map(([field, label]) => (
+                <label key={field} className="block">
+                  <span className="mb-1.5 block text-xs font-semibold text-gray-600">{label}</span>
+                  <div className="flex items-center rounded-2xl border border-gray-200 bg-gray-50 px-3 transition focus-within:border-black focus-within:bg-white focus-within:ring-4 focus-within:ring-gray-100">
+                    <LockKeyhole className="h-4 w-4 text-gray-400" />
+                    <input
+                      type="password"
+                      value={passwordForm[field as keyof typeof passwordForm]}
+                      onChange={(event) => updatePasswordField(field as keyof typeof passwordForm, event.target.value)}
+                      className="w-full bg-transparent px-3 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400"
+                      placeholder={label}
+                    />
+                  </div>
+                </label>
+              ))}
+
+              <button
+                type="submit"
+                disabled={passwordLoading}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+              >
+                {passwordLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {passwordLoading ? "Changing..." : "Change password"}
+              </button>
+            </form>
+
+            {passwordNotice ? (
+              <div className={`mt-4 rounded-2xl px-4 py-3 text-sm font-medium ${passwordNotice.type === "success" ? "bg-green-50 text-green-700 ring-1 ring-green-200" : "bg-red-50 text-red-700 ring-1 ring-red-200"}`}>
+                {passwordNotice.message}
+              </div>
+            ) : null}
           </div>
 
           <div className="rounded-3xl bg-gray-950 p-5 text-white shadow-sm">

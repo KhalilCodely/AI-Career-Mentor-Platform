@@ -4,6 +4,8 @@ import bcrypt from "bcryptjs";
 import { Prisma, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
+import { sendPasswordResetEmail } from "@/lib/email";
+import { createPasswordResetLink } from "@/lib/password-reset";
 import { prisma } from "@/lib/prisma";
 
 async function assertAdmin() {
@@ -101,6 +103,32 @@ export async function deleteUser(formData: FormData) {
   await assertAdmin();
 
   await prisma.user.delete({ where: { id: text(formData, "id") } });
+  revalidatePath("/admin");
+}
+
+
+export async function sendUserPasswordReset(formData: FormData) {
+  await assertAdmin();
+
+  const id = text(formData, "id");
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: { email: true, id: true, name: true },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const resetLink = await createPasswordResetLink(user.id);
+
+  await sendPasswordResetEmail({
+    email: user.email,
+    expiresAt: resetLink.expiresAt,
+    name: user.name,
+    resetUrl: resetLink.resetUrl,
+  });
+
   revalidatePath("/admin");
 }
 

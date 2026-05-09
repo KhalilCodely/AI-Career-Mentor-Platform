@@ -24,6 +24,7 @@ import {
   deleteUserCareerPath,
   deleteUserProgress,
   deleteUserSkill,
+  sendUserPasswordReset,
   toggleUserLock,
   updateCareerPath,
   updateCategory,
@@ -130,7 +131,7 @@ export default async function AdminPage() {
               </div>
               <h1 className="text-3xl font-bold tracking-tight md:text-5xl">Career Mentor Admin</h1>
               <p className="mt-4 text-sm leading-6 text-slate-300 md:text-base">
-                Create, read, update, and delete users, learning content, assignments, progress records, resumes, recommendations, and chat history. Lock accounts to block logins and active API use immediately.
+                Create, read, update, and delete users, learning content, assignments, progress records, resumes, recommendations, and chat history. Lock accounts to block logins and active API use immediately. Send professional one-time password reset links directly to users by email.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -166,7 +167,7 @@ export default async function AdminPage() {
           </form>
           <div className="mt-5 overflow-x-auto">
             <table className="min-w-full divide-y divide-white/10 text-left text-sm">
-              <thead className="text-xs uppercase tracking-[0.18em] text-slate-400"><tr><th className="py-3">Account</th><th>Role</th><th>Locked</th><th>Password</th><th>Actions</th></tr></thead>
+              <thead className="text-xs uppercase tracking-[0.18em] text-slate-400"><tr><th className="py-3">Account</th><th>Role</th><th>Locked</th><th>Password</th><th>Reset</th><th>Actions</th></tr></thead>
               <tbody className="divide-y divide-white/10">
                 {data.users.map((user) => (
                   <tr key={user.id} className="align-top">
@@ -180,6 +181,12 @@ export default async function AdminPage() {
                     <td className="py-3"><select form={`user-${user.id}`} name="role" defaultValue={user.role} className={selectClass}><option>USER</option><option>ADMIN</option></select></td>
                     <td className="py-3"><input form={`user-${user.id}`} name="isLocked" type="checkbox" defaultChecked={user.isLocked} /></td>
                     <td className="py-3"><input form={`user-${user.id}`} name="password" type="password" className={inputClass} placeholder="Leave unchanged" /></td>
+                    <td className="py-3">
+                      <form action={sendUserPasswordReset}>
+                        <input type="hidden" name="id" value={user.id} />
+                        <button className="rounded-xl border border-blue-300/30 bg-blue-400/10 px-3 py-2 text-xs font-black text-blue-100 transition hover:bg-blue-400/20">Email reset link</button>
+                      </form>
+                    </td>
                     <td className="flex flex-wrap gap-2 py-3">
                       <button form={`user-${user.id}`} className={buttonClass}>Save</button>
                       <form action={toggleUserLock}><input type="hidden" name="id" value={user.id} /><input type="hidden" name="isLocked" value={String(!user.isLocked)} /><button className="rounded-xl border border-amber-300/30 bg-amber-400/10 px-3 py-2 text-xs font-black text-amber-100">{user.isLocked ? "Unlock" : "Lock"}</button></form>
