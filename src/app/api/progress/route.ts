@@ -94,13 +94,21 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      await tx.learningEvent.create({
-        data: {
-          userId,
-          type: "PROGRESS_UPDATED",
-          metadata: { courseId, progress, completed: progress === 100 } as Prisma.InputJsonValue,
-        },
-      });
+      try {
+        await tx.learningEvent.create({
+          data: {
+            userId,
+            type: "PROGRESS_UPDATED",
+            metadata: { courseId, progress, completed: progress === 100 } as Prisma.InputJsonValue,
+          },
+        });
+      } catch (eventError) {
+        if (eventError instanceof Prisma.PrismaClientKnownRequestError && ["P2021", "P2022", "P2023"].includes(eventError.code)) {
+          console.warn("PROGRESS EVENT SKIPPED: learning_events table is not available yet. Run database migrations to enable learning analytics.", eventError);
+        } else {
+          throw eventError;
+        }
+      }
 
       return savedProgress;
     });

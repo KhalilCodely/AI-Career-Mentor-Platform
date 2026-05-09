@@ -199,7 +199,8 @@ export default function RoadmapPage() {
       const data = await parseJson<RoadmapResponse>(res);
 
       if (!res.ok) {
-        throw new Error(res.status === 401 ? "Log in to generate a roadmap" : data.error || "Failed to generate roadmap");
+        setError(res.status === 401 ? "Log in to generate a roadmap" : data.error || "Failed to generate roadmap");
+        return;
       }
 
       setRoadmap(data.data?.careerPath.roadmap || null);

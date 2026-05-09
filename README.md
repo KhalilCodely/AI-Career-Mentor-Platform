@@ -183,3 +183,14 @@ The roadmap experience now behaves more like a production AI feature:
 * AI generation attempts are logged in `ai_runs` with provider, model, prompt version, input/output, status, latency, and errors.
 * User roadmap/course feedback is stored through `/api/roadmap/feedback` and mirrored into `learning_events`.
 * Course progress updates also write learning events, allowing future coaching features to reason over user activity.
+
+### Roadmap generation troubleshooting
+
+If the roadmap UI shows `Failed to generate roadmap` after pulling these changes, apply the latest Prisma migration before retrying:
+
+```bash
+npm run db:migrate
+npm run prisma:generate
+```
+
+The generator now keeps the main roadmap save path resilient if the optional analytics tables are not present yet, but applying migrations is required to enable AI run logs, normalized roadmap items, feedback, and learning events.

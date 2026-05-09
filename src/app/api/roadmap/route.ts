@@ -174,6 +174,37 @@ function isAiDraft(value: unknown): value is AiRoadmapDraft {
   return !draft.phases || Array.isArray(draft.phases);
 }
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unexpected roadmap generation error";
+}
+
+function isOptionalProductTableError(error: unknown) {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    return error.code === "P2021" || error.code === "P2022" || error.code === "P2023";
+  }
+
+  const message = getErrorMessage(error).toLowerCase();
+  return [
+    "ai_runs",
+    "roadmap_versions",
+    "roadmap_phases",
+    "roadmap_items",
+    "roadmap_tasks",
+    "learning_events",
+    "does not exist",
+    "relation",
+  ].some((fragment) => message.includes(fragment));
+}
+
+function logOptionalProductTableError(scope: string, error: unknown) {
+  if (isOptionalProductTableError(error)) {
+    console.warn(`${scope}: optional roadmap product tables are not available yet. Run npm run db:migrate or npm run db:deploy to enable analytics persistence.`, error);
+    return;
+  }
+
+  throw error;
+}
+
 function average(values: number[]) {
   if (values.length === 0) return 0;
 
@@ -561,21 +592,26 @@ async function recordAiRun({
   latencyMs?: number;
   errorMessage?: string;
 }) {
-  return prisma.aiRun.create({
-    data: {
-      userId,
-      feature: "ROADMAP",
-      provider,
-      model,
-      promptVersion: PROMPT_VERSION,
-      input,
-      output,
-      status,
-      latencyMs,
-      errorMessage,
-    },
-    select: { id: true },
-  });
+  try {
+    return await prisma.aiRun.create({
+      data: {
+        userId,
+        feature: "ROADMAP",
+        provider,
+        model,
+        promptVersion: PROMPT_VERSION,
+        input,
+        output,
+        status,
+        latencyMs,
+        errorMessage,
+      },
+      select: { id: true },
+    });
+  } catch (error) {
+    logOptionalProductTableError("RECORD AI RUN", error);
+    return null;
+  }
 }
 
 async function generateAiRoadmap(input: {
@@ -626,7 +662,7 @@ async function generateAiRoadmap(input: {
         latencyMs: aiResponse.latencyMs,
       });
 
-      return { roadmap, aiRunId: aiRun.id };
+      return { roadmap, aiRunId: aiRun?.id };
     } catch (error) {
       const message = error instanceof Error ? error.message : "AI roadmap provider failed";
       console.error("AI ROADMAP PROVIDER ERROR:", error);
@@ -657,68 +693,72 @@ async function persistRoadmapDetails({
   roadmap: Roadmap;
   aiRunId?: string;
 }) {
-  if (aiRunId) {
-    await tx.aiRun.update({
-      where: { id: aiRunId },
-      data: { careerPathId },
-    });
-  }
+  try {
+    if (aiRunId) {
+      await tx.aiRun.update({
+        where: { id: aiRunId },
+        data: { careerPathId },
+      });
+    }
 
-  await tx.roadmapVersion.create({
-    data: {
-      careerPathId,
-      versionNumber: 1,
-      aiRunId,
-      snapshot: roadmap as unknown as Prisma.InputJsonValue,
-      summary: roadmap.description,
-    },
-  });
-
-  for (const [phaseIndex, phase] of roadmap.phases.entries()) {
-    const savedPhase = await tx.roadmapPhase.create({
+    await tx.roadmapVersion.create({
       data: {
         careerPathId,
-        title: phase.title,
-        description: phase.description,
-        focus: phase.focus,
-        outcome: phase.outcome,
-        position: phaseIndex,
-        progress: phase.progress,
+        versionNumber: 1,
+        aiRunId,
+        snapshot: roadmap as unknown as Prisma.InputJsonValue,
+        summary: roadmap.description,
       },
     });
 
-    for (const [courseIndex, course] of phase.courses.entries()) {
-      const status = course.completed ? "COMPLETED" : course.progress > 0 ? "IN_PROGRESS" : "NOT_STARTED";
-      const savedItem = await tx.roadmapItem.create({
+    for (const [phaseIndex, phase] of roadmap.phases.entries()) {
+      const savedPhase = await tx.roadmapPhase.create({
         data: {
-          phaseId: savedPhase.id,
-          courseId: course.id,
-          title: course.title,
-          type: "COURSE",
-          status,
-          progress: course.progress,
-          reason: course.why,
-          milestone: course.milestone,
-          position: courseIndex,
+          careerPathId,
+          title: phase.title,
+          description: phase.description,
+          focus: phase.focus,
+          outcome: phase.outcome,
+          position: phaseIndex,
+          progress: phase.progress,
         },
       });
 
-      await tx.roadmapTask.createMany({
-        data: [
-          { roadmapItemId: savedItem.id, title: `Complete ${course.title}`, completed: course.completed },
-          { roadmapItemId: savedItem.id, title: course.milestone || `Create one proof point for ${course.skill}`, completed: false },
-        ],
-      });
-    }
-  }
+      for (const [courseIndex, course] of phase.courses.entries()) {
+        const status = course.completed ? "COMPLETED" : course.progress > 0 ? "IN_PROGRESS" : "NOT_STARTED";
+        const savedItem = await tx.roadmapItem.create({
+          data: {
+            phaseId: savedPhase.id,
+            courseId: course.id,
+            title: course.title,
+            type: "COURSE",
+            status,
+            progress: course.progress,
+            reason: course.why,
+            milestone: course.milestone,
+            position: courseIndex,
+          },
+        });
 
-  await tx.learningEvent.create({
-    data: {
-      userId,
-      type: "ROADMAP_GENERATED",
-      metadata: { careerPathId, aiRunId, provider: roadmap.aiProvider, model: roadmap.aiModel } as Prisma.InputJsonValue,
-    },
-  });
+        await tx.roadmapTask.createMany({
+          data: [
+            { roadmapItemId: savedItem.id, title: `Complete ${course.title}`, completed: course.completed },
+            { roadmapItemId: savedItem.id, title: course.milestone || `Create one proof point for ${course.skill}`, completed: false },
+          ],
+        });
+      }
+    }
+
+    await tx.learningEvent.create({
+      data: {
+        userId,
+        type: "ROADMAP_GENERATED",
+        metadata: { careerPathId, aiRunId, provider: roadmap.aiProvider, model: roadmap.aiModel } as Prisma.InputJsonValue,
+      },
+    });
+  } catch (error) {
+    logOptionalProductTableError("PERSIST ROADMAP DETAILS", error);
+  }
 }
 
 async function getLatestUserCareerPath(userId: string) {
@@ -820,7 +860,7 @@ export async function POST(req: Request) {
       .split(/[^a-z0-9+#]+/i)
       .filter((term) => term.length > 2);
 
-    const courses = await prisma.course.findMany({
+    let courses = await prisma.course.findMany({
       where: selectedSkillIds.length > 0 ? {
         skillId: { in: selectedSkillIds },
       } : goalTerms.length > 0 ? {
@@ -845,8 +885,25 @@ export async function POST(req: Request) {
     });
 
     if (courses.length === 0) {
+      courses = await prisma.course.findMany({
+        include: {
+          skill: { include: { category: true } },
+          progress: {
+            where: { userId },
+            select: { progress: true, completed: true },
+          },
+        },
+        orderBy: [
+          { skill: { name: "asc" } },
+          { title: "asc" },
+        ],
+        take: 12,
+      });
+    }
+
+    if (courses.length === 0) {
       return NextResponse.json(
-        { success: false, error: "Select skills or seed courses before generating a roadmap" },
+        { success: false, error: "Seed courses before generating a roadmap" },
         { status: 400 }
       );
     }
@@ -920,7 +977,11 @@ export async function POST(req: Request) {
     console.error("SAVE ROADMAP ERROR:", error);
 
     return NextResponse.json(
-      { success: false, error: "Failed to generate roadmap" },
+      {
+        success: false,
+        error: "Failed to generate roadmap. Check that database migrations are applied and try again.",
+        detail: process.env.NODE_ENV === "development" ? getErrorMessage(error) : undefined,
+      },
       { status: 500 }
     );
   }
