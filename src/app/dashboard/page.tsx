@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -11,6 +12,9 @@ import {
   Sparkles,
   User,
 } from "lucide-react";
+import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 const cards = [
   {
@@ -66,31 +70,61 @@ const cards = [
 
 const statusItems = ["Roadmap ready", "AI mentor online", "Skills syncing"];
 
-export default function Dashboard() {
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "U";
+}
+
+export default async function Dashboard() {
+  const { userId, error } = await requireUser();
+
+  if (error) redirect("/login");
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      name: true,
+      profile: {
+        select: {
+          profileImage: true,
+        },
+      },
+    },
+  });
+
+  const displayName = user?.name?.trim() || "there";
+  const profileImage = user?.profile?.profileImage?.trim() || "";
+  const initials = getInitials(displayName);
+
   return (
     <div className="space-y-6 md:space-y-8">
       <section className="rounded-[2rem] border border-blue-100/80 bg-white/85 p-4 shadow-sm shadow-blue-950/5 backdrop-blur md:p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-sm font-extrabold text-white shadow-lg shadow-blue-500/20">
-              U
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-lg font-extrabold tracking-tight text-slate-950 md:text-xl">
-                Welcome back, keep growing today.
-              </p>
-              <p className="truncate text-sm font-medium text-slate-500">
-                Your career tools are ready in one focused workspace.
-              </p>
-            </div>
+        <div className="flex items-center gap-4">
+          <div className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-base font-extrabold text-white shadow-lg shadow-blue-500/20 ring-4 ring-white">
+            {profileImage ? (
+              <Image
+                src={profileImage}
+                alt={`${displayName} profile picture`}
+                fill
+                sizes="56px"
+                className="object-cover"
+              />
+            ) : (
+              <span>{initials}</span>
+            )}
           </div>
-          <Link
-            href="/dashboard/profile"
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-blue-700"
-          >
-            Update profile
-            <ArrowRight size={16} />
-          </Link>
+          <div className="min-w-0">
+            <p className="truncate text-lg font-extrabold tracking-tight text-slate-950 md:text-xl">
+              Welcome back, {displayName}. Keep growing today.
+            </p>
+            <p className="truncate text-sm font-medium text-slate-500">
+              Your career tools are ready in one focused workspace.
+            </p>
+          </div>
         </div>
       </section>
 
