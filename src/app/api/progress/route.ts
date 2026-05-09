@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 
@@ -76,20 +77,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await prisma.userProgress.upsert({
-      where: {
-        userId_courseId: { userId, courseId },
-      },
-      update: {
-        progress,
-        completed: progress === 100,
-      },
-      create: {
-        userId,
-        courseId,
-        progress,
-        completed: progress === 100,
-      },
+    const result = await prisma.$transaction(async (tx) => {
+      const savedProgress = await tx.userProgress.upsert({
+        where: {
+          userId_courseId: { userId, courseId },
+        },
+        update: {
+          progress,
+          completed: progress === 100,
+        },
+        create: {
+          userId,
+          courseId,
+          progress,
+          completed: progress === 100,
+        },
+      });
+
+      await tx.learningEvent.create({
+        data: {
+          userId,
+          type: "PROGRESS_UPDATED",
+          metadata: { courseId, progress, completed: progress === 100 } as Prisma.InputJsonValue,
+        },
+      });
+
+      return savedProgress;
     });
 
     return NextResponse.json({

@@ -22,28 +22,73 @@ enum RecommendationType {
   COURSES
 }
 
+enum AiRunFeature {
+  ROADMAP
+  CHAT
+  RESUME_REVIEW
+}
+
+enum AiRunStatus {
+  SUCCESS
+  FAILED
+  FALLBACK
+}
+
+enum AiFeedbackRating {
+  HELPFUL
+  NOT_HELPFUL
+  TOO_EASY
+  TOO_HARD
+  IRRELEVANT
+}
+
+enum RoadmapItemType {
+  COURSE
+  PROJECT
+  PRACTICE
+  MILESTONE
+}
+
+enum RoadmapItemStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+enum LearningEventType {
+  ROADMAP_GENERATED
+  ROADMAP_FEEDBACK
+  PROGRESS_UPDATED
+  TASK_COMPLETED
+  USER_STUCK
+}
+
 //////////////////////
 // USER
 //////////////////////
 
 model User {
-  id                String             @id @default(uuid()) @db.Uuid
-  name              String             @db.VarChar(120)
-  email             String             @unique @db.VarChar(255)
-  passwordHash      String             @map("password_hash")
-  role              UserRole           @default(USER)
-  isLocked          Boolean            @default(false) @map("is_locked")
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(120)
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(USER)
+  isLocked     Boolean  @default(false) @map("is_locked")
 
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  profile           Profile?
-  skills            UserSkill[]
-  careerPaths       UserCareerPath[]
-  aiChats           AiChat[]
-  recommendations   AiRecommendation[]
-  progress          UserProgress[]
-  resumes           Resume[]
+  profile             Profile?
+  skills              UserSkill[]
+  careerPaths         UserCareerPath[]
+  aiChats             AiChat[]
+  recommendations     AiRecommendation[]
+  progress            UserProgress[]
+  resumes             Resume[]
+  aiRuns              AiRun[]
+  aiFeedback          AiFeedback[]
+  learningEvents      LearningEvent[]
   passwordResetTokens PasswordResetToken[]
 
   @@index([createdAt])
@@ -55,14 +100,14 @@ model User {
 //////////////////////
 
 model PasswordResetToken {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  tokenHash String   @unique @map("token_hash")
-  expiresAt DateTime @map("expires_at")
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
   usedAt    DateTime? @map("used_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
@@ -74,20 +119,20 @@ model PasswordResetToken {
 //////////////////////
 
 model Profile {
-  id              String   @id @default(uuid()) @db.Uuid
-  userId          String   @unique @map("user_id") @db.Uuid
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @unique @map("user_id") @db.Uuid
 
   bio             String?
   education       String?
-  experienceLevel String?  @map("experience_level")
-  careerGoal      String?  @map("career_goal")
+  experienceLevel String? @map("experience_level")
+  careerGoal      String? @map("career_goal")
 
-  profileImage    String?  @map("profile_image") // ✅ profile picture
+  profileImage String? @map("profile_image") // ✅ profile picture
 
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([experienceLevel])
   @@map("profiles")
@@ -98,10 +143,10 @@ model Profile {
 //////////////////////
 
 model Category {
-  id      String   @id @default(uuid()) @db.Uuid
-  name    String   @unique
+  id   String @id @default(uuid()) @db.Uuid
+  name String @unique
 
-  skills  Skill[]
+  skills Skill[]
 
   @@map("categories")
 }
@@ -111,15 +156,15 @@ model Category {
 //////////////////////
 
 model Skill {
-  id          String      @id @default(uuid()) @db.Uuid
-  name        String
-  categoryId  String?     @map("category_id") @db.Uuid
+  id         String  @id @default(uuid()) @db.Uuid
+  name       String
+  categoryId String? @map("category_id") @db.Uuid
 
-  createdAt   DateTime    @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  category    Category?   @relation(fields: [categoryId], references: [id])
-  users       UserSkill[]
-  courses     Course[]
+  category Category?   @relation(fields: [categoryId], references: [id])
+  users    UserSkill[]
+  courses  Course[]
 
   @@unique([name, categoryId])
   @@index([categoryId])
@@ -131,17 +176,17 @@ model Skill {
 //////////////////////
 
 model UserSkill {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  skillId   String   @map("skill_id") @db.Uuid
+  id      String @id @default(uuid()) @db.Uuid
+  userId  String @map("user_id") @db.Uuid
+  skillId String @map("skill_id") @db.Uuid
 
-  level     Int      @db.SmallInt
+  level Int @db.SmallInt
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  skill     Skill    @relation(fields: [skillId], references: [id])
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id])
 
   @@unique([userId, skillId])
   @@index([userId])
@@ -154,16 +199,20 @@ model UserSkill {
 //////////////////////
 
 model CareerPath {
-  id          String           @id @default(uuid()) @db.Uuid
-  title       String           @unique
+  id          String  @id @default(uuid()) @db.Uuid
+  title       String  @unique
   description String?
 
-  roadmap     Json?            // ✅ AI generated roadmap
+  roadmap Json? // ✅ AI generated roadmap
 
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  users       UserCareerPath[]
+  users    UserCareerPath[]
+  versions RoadmapVersion[]
+  phases   RoadmapPhase[]
+  aiRuns   AiRun[]
+  feedback AiFeedback[]
 
   @@map("career_paths")
 }
@@ -173,17 +222,17 @@ model CareerPath {
 //////////////////////
 
 model UserCareerPath {
-  id           String     @id @default(uuid()) @db.Uuid
-  userId       String     @map("user_id") @db.Uuid
-  careerPathId String     @map("career_path_id") @db.Uuid
+  id           String @id @default(uuid()) @db.Uuid
+  userId       String @map("user_id") @db.Uuid
+  careerPathId String @map("career_path_id") @db.Uuid
 
-  progress     Decimal    @default(0) @db.Decimal(5,2)
+  progress Decimal @default(0) @db.Decimal(5, 2)
 
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  careerPath   CareerPath @relation(fields: [careerPathId], references: [id])
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  careerPath CareerPath @relation(fields: [careerPathId], references: [id])
 
   @@unique([userId, careerPathId])
   @@index([userId])
@@ -196,18 +245,19 @@ model UserCareerPath {
 //////////////////////
 
 model Course {
-  id        String         @id @default(uuid()) @db.Uuid
-  title     String
-  provider  String
-  url       String
+  id       String @id @default(uuid()) @db.Uuid
+  title    String
+  provider String
+  url      String
 
-  skillId   String         @map("skill_id") @db.Uuid
+  skillId String @map("skill_id") @db.Uuid
 
-  createdAt DateTime       @default(now()) @map("created_at")
-  updatedAt DateTime       @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  skill     Skill          @relation(fields: [skillId], references: [id])
-  progress  UserProgress[]
+  skill        Skill          @relation(fields: [skillId], references: [id])
+  progress     UserProgress[]
+  roadmapItems RoadmapItem[]
 
   @@index([skillId])
   @@map("courses")
@@ -218,18 +268,18 @@ model Course {
 //////////////////////
 
 model UserProgress {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  courseId  String   @map("course_id") @db.Uuid
+  id       String @id @default(uuid()) @db.Uuid
+  userId   String @map("user_id") @db.Uuid
+  courseId String @map("course_id") @db.Uuid
 
-  completed Boolean  @default(false)
-  progress  Decimal  @default(0) @db.Decimal(5,2)
+  completed Boolean @default(false)
+  progress  Decimal @default(0) @db.Decimal(5, 2)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
   @@index([userId])
@@ -242,15 +292,15 @@ model UserProgress {
 //////////////////////
 
 model AiChat {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
 
-  message   String
-  response  String
+  message  String
+  response String
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@map("ai_chats")
@@ -260,16 +310,148 @@ model AiChat {
 // AI RECOMMENDATIONS
 //////////////////////
 
+model RoadmapVersion {
+  id            String   @id @default(uuid()) @db.Uuid
+  careerPathId  String   @map("career_path_id") @db.Uuid
+  versionNumber Int      @map("version_number")
+  aiRunId       String?  @map("ai_run_id") @db.Uuid
+  snapshot      Json
+  summary       String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  careerPath CareerPath @relation(fields: [careerPathId], references: [id], onDelete: Cascade)
+  aiRun      AiRun?     @relation(fields: [aiRunId], references: [id], onDelete: SetNull)
+
+  @@unique([careerPathId, versionNumber])
+  @@index([careerPathId])
+  @@index([aiRunId])
+  @@map("roadmap_versions")
+}
+
+model RoadmapPhase {
+  id           String   @id @default(uuid()) @db.Uuid
+  careerPathId String   @map("career_path_id") @db.Uuid
+  title        String
+  description  String?
+  focus        String?
+  outcome      String?
+  position     Int
+  progress     Decimal  @default(0) @db.Decimal(5, 2)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  careerPath CareerPath    @relation(fields: [careerPathId], references: [id], onDelete: Cascade)
+  items      RoadmapItem[]
+
+  @@unique([careerPathId, position])
+  @@index([careerPathId])
+  @@map("roadmap_phases")
+}
+
+model RoadmapItem {
+  id        String            @id @default(uuid()) @db.Uuid
+  phaseId   String            @map("phase_id") @db.Uuid
+  courseId  String?           @map("course_id") @db.Uuid
+  title     String
+  type      RoadmapItemType   @default(COURSE)
+  status    RoadmapItemStatus @default(NOT_STARTED)
+  progress  Decimal           @default(0) @db.Decimal(5, 2)
+  reason    String?
+  milestone String?
+  position  Int
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  phase  RoadmapPhase  @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  course Course?       @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  tasks  RoadmapTask[]
+
+  @@unique([phaseId, position])
+  @@index([phaseId])
+  @@index([courseId])
+  @@map("roadmap_items")
+}
+
+model RoadmapTask {
+  id            String   @id @default(uuid()) @db.Uuid
+  roadmapItemId String   @map("roadmap_item_id") @db.Uuid
+  title         String
+  completed     Boolean  @default(false)
+  evidenceUrl   String?  @map("evidence_url")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  roadmapItem RoadmapItem @relation(fields: [roadmapItemId], references: [id], onDelete: Cascade)
+
+  @@index([roadmapItemId])
+  @@map("roadmap_tasks")
+}
+
+model AiRun {
+  id            String       @id @default(uuid()) @db.Uuid
+  userId        String       @map("user_id") @db.Uuid
+  careerPathId  String?      @map("career_path_id") @db.Uuid
+  feature       AiRunFeature
+  provider      String
+  model         String
+  promptVersion String       @map("prompt_version")
+  input         Json
+  output        Json?
+  status        AiRunStatus
+  latencyMs     Int?         @map("latency_ms")
+  errorMessage  String?      @map("error_message")
+  createdAt     DateTime     @default(now()) @map("created_at")
+
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  careerPath CareerPath?      @relation(fields: [careerPathId], references: [id], onDelete: SetNull)
+  versions   RoadmapVersion[]
+
+  @@index([userId, feature, createdAt])
+  @@index([careerPathId])
+  @@map("ai_runs")
+}
+
+model AiFeedback {
+  id           String           @id @default(uuid()) @db.Uuid
+  userId       String           @map("user_id") @db.Uuid
+  careerPathId String?          @map("career_path_id") @db.Uuid
+  targetType   String           @map("target_type")
+  targetId     String           @map("target_id")
+  rating       AiFeedbackRating
+  note         String?
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  careerPath CareerPath? @relation(fields: [careerPathId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([careerPathId])
+  @@map("ai_feedback")
+}
+
+model LearningEvent {
+  id        String            @id @default(uuid()) @db.Uuid
+  userId    String            @map("user_id") @db.Uuid
+  type      LearningEventType
+  metadata  Json?
+  createdAt DateTime          @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, createdAt])
+  @@map("learning_events")
+}
+
 model AiRecommendation {
-  id        String             @id @default(uuid()) @db.Uuid
-  userId    String             @map("user_id") @db.Uuid
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
 
-  type      RecommendationType
-  content   Json
+  type    RecommendationType
+  content Json
 
-  createdAt DateTime           @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, type])
   @@index([createdAt])
@@ -281,16 +463,16 @@ model AiRecommendation {
 //////////////////////
 
 model Resume {
-  id          String   @id @default(uuid()) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
 
-  fileUrl     String   @map("file_url")   // uploaded resume
-  score       Int?     // AI score (0-100)
-  feedback    Json?    // AI feedback
+  fileUrl  String @map("file_url") // uploaded resume
+  score    Int? // AI score (0-100)
+  feedback Json? // AI feedback
 
-  createdAt   DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("resumes")

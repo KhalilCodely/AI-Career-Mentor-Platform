@@ -42,6 +42,14 @@ type RoadmapPhase = {
   progress: number;
 };
 
+type RoadmapPreferences = {
+  timelineDays: number;
+  weeklyHours: number;
+  learningStyle: string;
+  budget: string;
+  desiredOutcome: string;
+};
+
 type Roadmap = {
   title: string;
   description: string;
@@ -63,6 +71,7 @@ type Roadmap = {
   };
   weeklyCommitment?: string;
   successMetrics?: string[];
+  preferences?: RoadmapPreferences;
 };
 
 type AiRoadmapDraft = {
@@ -90,6 +99,27 @@ type GeminiGenerateResponse = {
   error?: { message?: string };
 };
 
+type ProviderResult = {
+  provider: "openai" | "gemini";
+  model: string;
+  content: string;
+  latencyMs: number;
+};
+
+type GenerateRoadmapPayload = {
+  preferences?: Partial<RoadmapPreferences>;
+};
+
+const PROMPT_VERSION = "roadmap.v2";
+
+const defaultPreferences: RoadmapPreferences = {
+  timelineDays: 90,
+  weeklyHours: 6,
+  learningStyle: "project-based",
+  budget: "free-first",
+  desiredOutcome: "portfolio-ready proof",
+};
+
 const phaseTemplates = [
   {
     id: "phase-1",
@@ -113,6 +143,36 @@ const phaseTemplates = [
     outcome: "You have project-ready evidence and a clear next step for interviews or promotion.",
   },
 ];
+
+function clampNumber(value: unknown, fallback: number, min: number, max: number) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(Math.max(Math.round(parsed), min), max);
+}
+
+function cleanText(value: unknown, fallback: string, maxLength = 120) {
+  if (typeof value !== "string") return fallback;
+  const cleaned = value.trim().replace(/\s+/g, " ").slice(0, maxLength);
+  return cleaned || fallback;
+}
+
+function normalizePreferences(payload?: GenerateRoadmapPayload): RoadmapPreferences {
+  const preferences = payload?.preferences || {};
+
+  return {
+    timelineDays: clampNumber(preferences.timelineDays, defaultPreferences.timelineDays, 14, 365),
+    weeklyHours: clampNumber(preferences.weeklyHours, defaultPreferences.weeklyHours, 1, 40),
+    learningStyle: cleanText(preferences.learningStyle, defaultPreferences.learningStyle),
+    budget: cleanText(preferences.budget, defaultPreferences.budget),
+    desiredOutcome: cleanText(preferences.desiredOutcome, defaultPreferences.desiredOutcome),
+  };
+}
+
+function isAiDraft(value: unknown): value is AiRoadmapDraft {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const draft = value as AiRoadmapDraft;
+  return !draft.phases || Array.isArray(draft.phases);
+}
 
 function average(values: number[]) {
   if (values.length === 0) return 0;
@@ -203,6 +263,7 @@ function assembleLocalRoadmap({
   aiProvider = "local",
   aiModel = "rule-based-roadmap",
   aiGenerated = false,
+  preferences = defaultPreferences,
 }: {
   careerGoal: string;
   experienceLevel: string;
@@ -211,6 +272,7 @@ function assembleLocalRoadmap({
   aiProvider?: Roadmap["aiProvider"];
   aiModel?: string;
   aiGenerated?: boolean;
+  preferences?: RoadmapPreferences;
 }): Roadmap {
   const selectedSkillLevels = new Map(selectedSkills.map((userSkill) => [userSkill.skillId, userSkill.level]));
   const phases = phaseTemplates.map((phase) => ({ ...phase, courses: [] as RoadmapCourse[], progress: 0 }));
@@ -231,7 +293,7 @@ function assembleLocalRoadmap({
 
   return {
     title: `${careerGoal} roadmap`,
-    description: `A personalized ${experienceLevel.toLowerCase()} learning path built from your profile, selected skills, recommended courses, and saved course progress.`,
+    description: `A personalized ${experienceLevel.toLowerCase()} learning path for ${preferences.timelineDays} days at ${preferences.weeklyHours} hours per week, built from your profile, selected skills, recommended courses, and saved course progress.`,
     careerGoal,
     experienceLevel,
     selectedSkills: selectedSkills.map((userSkill) => ({
@@ -247,7 +309,8 @@ function assembleLocalRoadmap({
     aiModel,
     aiGenerated,
     uses: { profile: true, skills: true, courses: true, progress: true, ai: aiGenerated },
-    weeklyCommitment: experienceLevel.toLowerCase().includes("beginner") ? "5-7 focused hours per week" : "7-10 focused hours per week",
+    preferences,
+    weeklyCommitment: `${preferences.weeklyHours} focused hours per week for ${preferences.timelineDays} days`,
     successMetrics: [
       "Update course progress after every study session",
       "Finish at least one phase outcome before moving forward",
@@ -264,6 +327,7 @@ function buildPrompt({
   experienceLevel,
   selectedSkills,
   courses,
+  preferences,
 }: {
   name: string;
   bio?: string | null;
@@ -272,6 +336,7 @@ function buildPrompt({
   experienceLevel: string;
   selectedSkills: { skillId: string; level: number; skill: { id: string; name: string; category: { name: string } | null } }[];
   courses: CourseWithSkill[];
+  preferences: RoadmapPreferences;
 }) {
   const courseCatalog = courses.map((course) => ({
     id: course.id,
@@ -284,7 +349,7 @@ function buildPrompt({
   }));
 
   return JSON.stringify({
-    instruction: "Create a precise 3-phase career learning roadmap. Return only valid JSON. Use only course IDs from courseCatalog. Prioritize unfinished courses, respect current progress, and personalize from profile, selected skills, courses, and progress. Keep descriptions concise and actionable.",
+    instruction: "Create a precise 3-phase career learning roadmap. Return only valid JSON. Use only course IDs from courseCatalog. Prioritize unfinished courses, respect current progress, and personalize from profile, selected skills, courses, progress, and user preferences. Include measurable milestones, a practical weekly commitment, and concise reasons for course choices.",
     requiredJsonShape: {
       title: "string",
       description: "string",
@@ -302,6 +367,7 @@ function buildPrompt({
       ],
     },
     profile: { name, bio, education, careerGoal, experienceLevel },
+    preferences,
     selectedSkills: selectedSkills.map((userSkill) => ({
       id: userSkill.skill.id,
       name: userSkill.skill.name,
@@ -325,6 +391,7 @@ async function callOpenAiRoadmap(prompt: string) {
   if (!apiKey) return null;
 
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+  const startedAt = Date.now();
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -351,6 +418,7 @@ async function callOpenAiRoadmap(prompt: string) {
     provider: "openai" as const,
     model,
     content: data.choices?.[0]?.message?.content || "{}",
+    latencyMs: Date.now() - startedAt,
   };
 }
 
@@ -359,6 +427,7 @@ async function callGeminiRoadmap(prompt: string) {
   if (!apiKey) return null;
 
   const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const startedAt = Date.now();
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: "POST",
     headers: {
@@ -386,6 +455,7 @@ async function callGeminiRoadmap(prompt: string) {
     provider: "gemini" as const,
     model,
     content: data.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("") || "{}",
+    latencyMs: Date.now() - startedAt,
   };
 }
 
@@ -397,6 +467,7 @@ function applyAiDraft({
   experienceLevel,
   aiProvider,
   aiModel,
+  preferences,
 }: {
   draft: AiRoadmapDraft;
   courses: CourseWithSkill[];
@@ -405,6 +476,7 @@ function applyAiDraft({
   experienceLevel: string;
   aiProvider: "openai" | "gemini";
   aiModel: string;
+  preferences: RoadmapPreferences;
 }) {
   const courseById = new Map(courses.map((course) => [course.id, course]));
   const usedCourseIds = new Set<string>();
@@ -444,7 +516,7 @@ function applyAiDraft({
 
   return {
     title: draft.title || `${careerGoal} AI roadmap`,
-    description: draft.description || `An AI-generated ${experienceLevel.toLowerCase()} learning path based on your profile, skills, course catalog, and progress.`,
+    description: draft.description || `An AI-generated ${experienceLevel.toLowerCase()} learning path for ${preferences.timelineDays} days based on your profile, skills, course catalog, and progress.`,
     careerGoal,
     experienceLevel,
     selectedSkills: selectedSkills.map((userSkill) => ({
@@ -460,7 +532,8 @@ function applyAiDraft({
     aiModel,
     aiGenerated: true,
     uses: { profile: true, skills: true, courses: true, progress: true, ai: true },
-    weeklyCommitment: draft.weeklyCommitment || "6-8 focused hours per week",
+    preferences,
+    weeklyCommitment: draft.weeklyCommitment || `${preferences.weeklyHours} focused hours per week for ${preferences.timelineDays} days`,
     successMetrics: Array.isArray(draft.successMetrics) ? draft.successMetrics.slice(0, 4) : [
       "Complete each phase outcome before moving forward",
       "Keep course progress updated weekly",
@@ -469,7 +542,44 @@ function applyAiDraft({
   } satisfies Roadmap;
 }
 
+async function recordAiRun({
+  userId,
+  provider,
+  model,
+  input,
+  output,
+  status,
+  latencyMs,
+  errorMessage,
+}: {
+  userId: string;
+  provider: string;
+  model: string;
+  input: Prisma.InputJsonValue;
+  output?: Prisma.InputJsonValue;
+  status: "SUCCESS" | "FAILED" | "FALLBACK";
+  latencyMs?: number;
+  errorMessage?: string;
+}) {
+  return prisma.aiRun.create({
+    data: {
+      userId,
+      feature: "ROADMAP",
+      provider,
+      model,
+      promptVersion: PROMPT_VERSION,
+      input,
+      output,
+      status,
+      latencyMs,
+      errorMessage,
+    },
+    select: { id: true },
+  });
+}
+
 async function generateAiRoadmap(input: {
+  userId: string;
   name: string;
   bio?: string | null;
   education?: string | null;
@@ -477,32 +587,138 @@ async function generateAiRoadmap(input: {
   experienceLevel: string;
   selectedSkills: { skillId: string; level: number; skill: { id: string; name: string; category: { name: string } | null } }[];
   courses: CourseWithSkill[];
-}) {
+  preferences: RoadmapPreferences;
+}): Promise<{ roadmap: Roadmap; aiRunId?: string } | null> {
   const prompt = buildPrompt(input);
-  const callers = [callOpenAiRoadmap, callGeminiRoadmap];
+  const providerInput = { promptVersion: PROMPT_VERSION, prompt, preferences: input.preferences } as Prisma.InputJsonValue;
+  const callers = [
+    { provider: "openai", model: process.env.OPENAI_MODEL || "gpt-4o-mini", call: callOpenAiRoadmap },
+    { provider: "gemini", model: process.env.GEMINI_MODEL || "gemini-2.5-flash", call: callGeminiRoadmap },
+  ];
 
   for (const caller of callers) {
     try {
-      const aiResponse = await caller(prompt);
+      const aiResponse = await caller.call(prompt) as ProviderResult | null;
       if (!aiResponse) continue;
 
-      const draft = JSON.parse(extractJson(aiResponse.content)) as AiRoadmapDraft;
+      const parsed = JSON.parse(extractJson(aiResponse.content)) as unknown;
+      if (!isAiDraft(parsed)) {
+        throw new Error("AI roadmap response did not match the required JSON shape");
+      }
 
-      return applyAiDraft({
-        draft,
+      const roadmap = applyAiDraft({
+        draft: parsed,
         courses: input.courses,
         selectedSkills: input.selectedSkills,
         careerGoal: input.careerGoal,
         experienceLevel: input.experienceLevel,
         aiProvider: aiResponse.provider,
         aiModel: aiResponse.model,
+        preferences: input.preferences,
       });
+      const aiRun = await recordAiRun({
+        userId: input.userId,
+        provider: aiResponse.provider,
+        model: aiResponse.model,
+        input: providerInput,
+        output: { raw: aiResponse.content, roadmap } as unknown as Prisma.InputJsonValue,
+        status: "SUCCESS",
+        latencyMs: aiResponse.latencyMs,
+      });
+
+      return { roadmap, aiRunId: aiRun.id };
     } catch (error) {
+      const message = error instanceof Error ? error.message : "AI roadmap provider failed";
       console.error("AI ROADMAP PROVIDER ERROR:", error);
+      await recordAiRun({
+        userId: input.userId,
+        provider: caller.provider,
+        model: caller.model,
+        input: providerInput,
+        status: "FAILED",
+        errorMessage: message,
+      });
     }
   }
 
   return null;
+}
+
+async function persistRoadmapDetails({
+  tx,
+  userId,
+  careerPathId,
+  roadmap,
+  aiRunId,
+}: {
+  tx: Prisma.TransactionClient;
+  userId: string;
+  careerPathId: string;
+  roadmap: Roadmap;
+  aiRunId?: string;
+}) {
+  if (aiRunId) {
+    await tx.aiRun.update({
+      where: { id: aiRunId },
+      data: { careerPathId },
+    });
+  }
+
+  await tx.roadmapVersion.create({
+    data: {
+      careerPathId,
+      versionNumber: 1,
+      aiRunId,
+      snapshot: roadmap as unknown as Prisma.InputJsonValue,
+      summary: roadmap.description,
+    },
+  });
+
+  for (const [phaseIndex, phase] of roadmap.phases.entries()) {
+    const savedPhase = await tx.roadmapPhase.create({
+      data: {
+        careerPathId,
+        title: phase.title,
+        description: phase.description,
+        focus: phase.focus,
+        outcome: phase.outcome,
+        position: phaseIndex,
+        progress: phase.progress,
+      },
+    });
+
+    for (const [courseIndex, course] of phase.courses.entries()) {
+      const status = course.completed ? "COMPLETED" : course.progress > 0 ? "IN_PROGRESS" : "NOT_STARTED";
+      const savedItem = await tx.roadmapItem.create({
+        data: {
+          phaseId: savedPhase.id,
+          courseId: course.id,
+          title: course.title,
+          type: "COURSE",
+          status,
+          progress: course.progress,
+          reason: course.why,
+          milestone: course.milestone,
+          position: courseIndex,
+        },
+      });
+
+      await tx.roadmapTask.createMany({
+        data: [
+          { roadmapItemId: savedItem.id, title: `Complete ${course.title}`, completed: course.completed },
+          { roadmapItemId: savedItem.id, title: course.milestone || `Create one proof point for ${course.skill}`, completed: false },
+        ],
+      });
+    }
+  }
+
+  await tx.learningEvent.create({
+    data: {
+      userId,
+      type: "ROADMAP_GENERATED",
+      metadata: { careerPathId, aiRunId, provider: roadmap.aiProvider, model: roadmap.aiModel } as Prisma.InputJsonValue,
+    },
+  });
 }
 
 async function getLatestUserCareerPath(userId: string) {
@@ -563,10 +779,18 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
     const { userId, error } = await requireUser();
     if (error) return error;
+
+    let payload: GenerateRoadmapPayload | undefined;
+    try {
+      payload = await req.json() as GenerateRoadmapPayload;
+    } catch {
+      payload = undefined;
+    }
+    const preferences = normalizePreferences(payload);
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -627,7 +851,8 @@ export async function POST() {
       );
     }
 
-    const roadmap = await generateAiRoadmap({
+    const aiResult = await generateAiRoadmap({
+      userId,
       name: user.name,
       bio: user.profile?.bio,
       education: user.profile?.education,
@@ -635,12 +860,24 @@ export async function POST() {
       experienceLevel,
       selectedSkills: user.skills,
       courses,
-    }) || assembleLocalRoadmap({
+      preferences,
+    });
+    const roadmap = aiResult?.roadmap || assembleLocalRoadmap({
       careerGoal,
       experienceLevel,
       selectedSkills: user.skills,
       courses,
+      preferences,
     });
+    const fallbackRun = aiResult ? null : await recordAiRun({
+      userId,
+      provider: "local",
+      model: "rule-based-roadmap",
+      input: { preferences, careerGoal, experienceLevel } as Prisma.InputJsonValue,
+      output: roadmap as unknown as Prisma.InputJsonValue,
+      status: "FALLBACK",
+    });
+    const aiRunId = aiResult?.aiRunId || fallbackRun?.id;
     const careerPathTitle = `${careerGoal} roadmap - ${userId.slice(0, 8)} - ${Date.now()}`;
 
     const saved = await prisma.$transaction(async (tx) => {
@@ -651,6 +888,8 @@ export async function POST() {
           roadmap: roadmap as unknown as Prisma.InputJsonValue,
         },
       });
+
+      await persistRoadmapDetails({ tx, userId, careerPathId: careerPath.id, roadmap, aiRunId });
 
       return tx.userCareerPath.create({
         data: {

@@ -171,3 +171,15 @@ npm run db:deploy
 ## ✅ You’re Ready!
 
 You can now start developing features using Prisma and Next.js 🚀
+
+---
+
+## 🤖 AI roadmap product upgrades
+
+The roadmap experience now behaves more like a production AI feature:
+
+* The UI collects roadmap preferences before generation: timeline, weekly hours, learning style, budget, and desired outcome.
+* Roadmaps are still saved as a JSON snapshot for compatibility, but generation also writes normalized roadmap versions, phases, items, and tasks for future editing and analytics.
+* AI generation attempts are logged in `ai_runs` with provider, model, prompt version, input/output, status, latency, and errors.
+* User roadmap/course feedback is stored through `/api/roadmap/feedback` and mirrored into `learning_events`.
+* Course progress updates also write learning events, allowing future coaching features to reason over user activity.

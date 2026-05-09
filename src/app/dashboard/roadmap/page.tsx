@@ -18,6 +18,8 @@ import {
   Target,
   Trophy,
   UserRound,
+  ThumbsDown,
+  ThumbsUp,
 } from "lucide-react";
 
 type RoadmapCourse = {
@@ -43,6 +45,14 @@ type RoadmapPhase = {
   progress: number;
 };
 
+type RoadmapPreferences = {
+  timelineDays: number;
+  weeklyHours: number;
+  learningStyle: string;
+  budget: string;
+  desiredOutcome: string;
+};
+
 type Roadmap = {
   title: string;
   description: string;
@@ -64,6 +74,7 @@ type Roadmap = {
   };
   weeklyCommitment?: string;
   successMetrics?: string[];
+  preferences?: RoadmapPreferences;
 };
 
 type RoadmapResponse = {
@@ -127,6 +138,16 @@ export default function RoadmapPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [careerPathId, setCareerPathId] = useState("");
+  const [savingCourseId, setSavingCourseId] = useState("");
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [preferences, setPreferences] = useState<RoadmapPreferences>({
+    timelineDays: 90,
+    weeklyHours: 6,
+    learningStyle: "project-based",
+    budget: "free-first",
+    desiredOutcome: "portfolio-ready proof",
+  });
 
   const roadmapPhases = useMemo(() => roadmap?.phases ?? [], [roadmap]);
   const roadmapSelectedSkills = useMemo(() => roadmap?.selectedSkills ?? [], [roadmap]);
@@ -143,6 +164,27 @@ export default function RoadmapPage() {
     [roadmapPhases]
   );
 
+  const recalculateRoadmap = (phases: RoadmapPhase[]) => {
+    const allCourses = phases.flatMap((phase) => phase.courses);
+    const overallProgress = allCourses.length > 0
+      ? Math.round(allCourses.reduce((sum, course) => sum + course.progress, 0) / allCourses.length)
+      : 0;
+
+    return {
+      phases: phases.map((phase) => ({
+        ...phase,
+        progress: phase.courses.length > 0
+          ? Math.round(phase.courses.reduce((sum, course) => sum + course.progress, 0) / phase.courses.length)
+          : 0,
+      })),
+      overallProgress,
+    };
+  };
+
+  const updatePreference = <Key extends keyof RoadmapPreferences>(key: Key, value: RoadmapPreferences[Key]) => {
+    setPreferences((current) => ({ ...current, [key]: value }));
+  };
+
   const generateRoadmap = async () => {
     setGenerating(true);
     setError("");
@@ -151,6 +193,8 @@ export default function RoadmapPage() {
       const res = await fetch("/api/roadmap", {
         method: "POST",
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preferences }),
       });
       const data = await parseJson<RoadmapResponse>(res);
 
@@ -159,6 +203,7 @@ export default function RoadmapPage() {
       }
 
       setRoadmap(data.data?.careerPath.roadmap || null);
+      setCareerPathId(data.data?.careerPath.id || "");
     } catch (err) {
       console.error("Failed to generate roadmap", err);
       setError(getErrorMessage(err));
@@ -182,6 +227,7 @@ export default function RoadmapPage() {
 
         if (!ignore) {
           setRoadmap(data.data?.careerPath.roadmap || null);
+          setCareerPathId(data.data?.careerPath.id || "");
         }
       } catch (err) {
         console.error("Failed to load roadmap", err);
@@ -202,6 +248,66 @@ export default function RoadmapPage() {
       ignore = true;
     };
   }, []);
+
+  const updateCourseProgress = async (courseId: string, progress: number) => {
+    if (!roadmap) return;
+
+    const previousRoadmap = roadmap;
+    const nextPhases = roadmapPhases.map((phase) => ({
+      ...phase,
+      courses: phase.courses.map((course) => course.id === courseId
+        ? { ...course, progress, completed: progress === 100 }
+        : course),
+    }));
+    const recalculated = recalculateRoadmap(nextPhases);
+
+    setRoadmap({ ...roadmap, ...recalculated });
+    setSavingCourseId(courseId);
+    setError("");
+
+    try {
+      const res = await fetch("/api/progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ courseId, progress }),
+      });
+      const data = await parseJson<{ error?: string }>(res);
+
+      if (!res.ok) {
+        throw new Error(res.status === 401 ? "Log in to save course progress" : data.error || "Progress update failed");
+      }
+    } catch (err) {
+      console.error("Roadmap progress update failed", err);
+      setRoadmap(previousRoadmap);
+      setError(getErrorMessage(err));
+    } finally {
+      setSavingCourseId("");
+    }
+  };
+
+  const sendFeedback = async (targetType: "roadmap" | "phase" | "course", targetId: string, rating: "HELPFUL" | "NOT_HELPFUL" | "TOO_EASY" | "TOO_HARD" | "IRRELEVANT") => {
+    setFeedbackMessage("");
+
+    try {
+      const res = await fetch("/api/roadmap/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ careerPathId, targetType, targetId, rating }),
+      });
+      const data = await parseJson<{ error?: string }>(res);
+
+      if (!res.ok) {
+        throw new Error(data.error || "Feedback save failed");
+      }
+
+      setFeedbackMessage("Feedback saved. Future roadmap updates can use this signal.");
+    } catch (err) {
+      console.error("Roadmap feedback failed", err);
+      setError(getErrorMessage(err));
+    }
+  };
 
   if (loading) {
     return (
@@ -248,6 +354,73 @@ export default function RoadmapPage() {
           </div>
         </div>
       </section>
+
+
+      <section className="grid gap-4 rounded-[2rem] border bg-white p-5 shadow-sm lg:grid-cols-5">
+        <label className="grid gap-2 text-sm font-semibold text-slate-700">
+          Timeline
+          <select
+            value={preferences.timelineDays}
+            onChange={(event) => updatePreference("timelineDays", Number(event.target.value))}
+            className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 font-medium outline-none focus:border-blue-500 focus:bg-white"
+          >
+            <option value={30}>30 days</option>
+            <option value={60}>60 days</option>
+            <option value={90}>90 days</option>
+            <option value={180}>180 days</option>
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-semibold text-slate-700">
+          Hours / week
+          <input
+            type="number"
+            min={1}
+            max={40}
+            value={preferences.weeklyHours}
+            onChange={(event) => updatePreference("weeklyHours", Number(event.target.value))}
+            className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 font-medium outline-none focus:border-blue-500 focus:bg-white"
+          />
+        </label>
+        <label className="grid gap-2 text-sm font-semibold text-slate-700">
+          Learning style
+          <select
+            value={preferences.learningStyle}
+            onChange={(event) => updatePreference("learningStyle", event.target.value)}
+            className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 font-medium outline-none focus:border-blue-500 focus:bg-white"
+          >
+            <option value="project-based">Project-based</option>
+            <option value="video-first">Video-first</option>
+            <option value="docs-and-practice">Docs + practice</option>
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-semibold text-slate-700">
+          Budget
+          <select
+            value={preferences.budget}
+            onChange={(event) => updatePreference("budget", event.target.value)}
+            className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 font-medium outline-none focus:border-blue-500 focus:bg-white"
+          >
+            <option value="free-first">Free first</option>
+            <option value="paid-ok">Paid OK</option>
+            <option value="certification-focused">Certification focused</option>
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-semibold text-slate-700">
+          Outcome
+          <input
+            type="text"
+            value={preferences.desiredOutcome}
+            onChange={(event) => updatePreference("desiredOutcome", event.target.value)}
+            className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 font-medium outline-none focus:border-blue-500 focus:bg-white"
+          />
+        </label>
+      </section>
+
+      {feedbackMessage && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-700">
+          {feedbackMessage}
+        </div>
+      )}
 
       {error && (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
@@ -305,6 +478,14 @@ export default function RoadmapPage() {
             </div>
           </section>
 
+          <div className="flex flex-wrap items-center gap-2 rounded-3xl border bg-white p-4 shadow-sm">
+            <span className="mr-2 text-sm font-bold text-slate-700">Was this roadmap useful?</span>
+            <button type="button" onClick={() => sendFeedback("roadmap", careerPathId || roadmap.title, "HELPFUL")} className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-bold text-emerald-700 hover:bg-emerald-100"><ThumbsUp size={15} /> Helpful</button>
+            <button type="button" onClick={() => sendFeedback("roadmap", careerPathId || roadmap.title, "NOT_HELPFUL")} className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-3 py-1.5 text-sm font-bold text-rose-700 hover:bg-rose-100"><ThumbsDown size={15} /> Not useful</button>
+            <button type="button" onClick={() => sendFeedback("roadmap", careerPathId || roadmap.title, "TOO_EASY")} className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-bold text-slate-700 hover:bg-slate-200">Too easy</button>
+            <button type="button" onClick={() => sendFeedback("roadmap", careerPathId || roadmap.title, "TOO_HARD")} className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-bold text-slate-700 hover:bg-slate-200">Too hard</button>
+          </div>
+
           <section className="grid gap-6 xl:grid-cols-[1fr_22rem]">
             <div className="space-y-5">
               {roadmapPhases.map((phase, index) => (
@@ -359,6 +540,20 @@ export default function RoadmapPage() {
                               <span>{course.progress}%</span>
                             </div>
                             <ProgressBar value={course.progress} />
+                            <input
+                              aria-label={`Update progress for ${course.title}`}
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={course.progress}
+                              disabled={savingCourseId === course.id}
+                              className="w-full accent-slate-950"
+                              onChange={(event) => updateCourseProgress(course.id, Number(event.target.value))}
+                            />
+                            <div className="grid grid-cols-2 gap-2">
+                              <button type="button" onClick={() => sendFeedback("course", course.id, "HELPFUL")} className="inline-flex items-center justify-center gap-1 rounded-xl bg-emerald-50 px-2 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100"><ThumbsUp size={13} /> Good</button>
+                              <button type="button" onClick={() => sendFeedback("course", course.id, "TOO_HARD")} className="inline-flex items-center justify-center gap-1 rounded-xl bg-amber-50 px-2 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100">Stuck</button>
+                            </div>
                             <a
                               href={course.url}
                               target="_blank"

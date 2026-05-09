@@ -71,6 +71,42 @@ This document outlines all registered API routes in the Tech Talks Career Mentor
 **Response**: `{ success: boolean, message: string }`  
 **Status**: 200 | 400 | 401 | 403 | 404 | 500
 
+
+## AI Roadmap Routes
+
+### GET `/api/roadmap`
+**Purpose**: Return the authenticated user's latest saved AI roadmap with live course progress merged into the roadmap snapshot.
+**Auth**: Requires authenticated user cookie/token.
+**Response**: `{ success: boolean, data: { id, progress, careerPath: { id, title, description, roadmap } } | null }`
+**Status**: 200 | 401 | 500
+
+### POST `/api/roadmap`
+**Purpose**: Generate a new AI roadmap from profile, selected skills, courses, progress, and roadmap preferences. Saves a JSON snapshot plus normalized versions/phases/items/tasks and AI run metadata.
+**Auth**: Requires authenticated user cookie/token.
+**Body**: `{ preferences?: { timelineDays?: number, weeklyHours?: number, learningStyle?: string, budget?: string, desiredOutcome?: string } }`
+**Response**: `{ success: boolean, data: { id, progress, careerPath: { id, title, description, roadmap } } }`
+**Status**: 200 | 400 | 401 | 404 | 500
+
+### POST `/api/roadmap/feedback`
+**Purpose**: Save user feedback for a roadmap, phase, course, or mentor answer and record a learning event.
+**Auth**: Requires authenticated user cookie/token.
+**Body**: `{ careerPathId?: string, targetType: "roadmap" | "phase" | "course" | "mentor", targetId: string, rating: "HELPFUL" | "NOT_HELPFUL" | "TOO_EASY" | "TOO_HARD" | "IRRELEVANT", note?: string }`
+**Response**: `{ success: boolean, data: { id, rating, createdAt } }`
+**Status**: 200 | 400 | 401 | 404 | 500
+
+### GET `/api/progress`
+**Purpose**: Return the authenticated user's course progress records.
+**Auth**: Requires authenticated user cookie/token.
+**Response**: `{ success: boolean, data: { courseId, progress, completed }[] }`
+**Status**: 200 | 401 | 500
+
+### POST `/api/progress`
+**Purpose**: Create or update course progress and record a learning event.
+**Auth**: Requires authenticated user cookie/token.
+**Body**: `{ courseId: string, progress: number }`
+**Response**: `{ success: boolean, data: { courseId, progress, completed } }`
+**Status**: 200 | 400 | 401 | 404 | 500
+
 ## Career Path Enrollment Routes
 
 ### POST `/api/career_path/enroll`
