@@ -166,6 +166,44 @@ For deployed environments, apply committed migrations with:
 npm run db:deploy
 ```
 
+
+---
+
+## ☁️ Deploying to Vercel
+
+This project is configured for Vercel with `vercel.json` and a `vercel-build` script that runs Prisma Client generation before `next build`.
+
+1. Push the repository to GitHub and import it in Vercel as a Next.js project.
+2. In Vercel, create/connect a PostgreSQL database and add these environment variables in **Project Settings → Environment Variables**:
+
+   ```env
+   DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/career_mentor?schema=public"
+   JWT_SECRET="a-long-random-secret"
+   NEXT_PUBLIC_APP_URL="https://your-project.vercel.app"
+   ```
+
+   Optional AI variables can also be added if you want external AI responses:
+
+   ```env
+   OPENAI_API_KEY=""
+   OPENAI_MODEL="gpt-4o-mini"
+   GEMINI_API_KEY=""
+   GEMINI_MODEL="gemini-2.5-flash"
+   ```
+
+3. After the first deploy (and after future schema changes), apply the committed Prisma migrations against the Vercel database from your local machine:
+
+   ```bash
+   DATABASE_URL="your-vercel-postgres-url" npm run db:deploy
+   ```
+
+4. Deploy normally from Vercel. The configured build command is:
+
+   ```bash
+   npm run vercel-build
+   ```
+
+If Vercel reports `prisma: command not found`, make sure dependencies are installed from the updated `package.json`; the project now includes `prisma` as a dev dependency and runs `prisma generate` during install/build.
 ---
 
 ## ✅ You’re Ready!
